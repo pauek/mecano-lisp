@@ -18,7 +18,7 @@ class SeqScanner {
   typedef std::vector<Vec> Acum;
   str   _seps;
   Trans _trans;
-  int   _lev;
+  int   _lev, _col;
   Acum  _acum;
   Vec   _in;
   bool  _breaks;
@@ -27,14 +27,14 @@ class SeqScanner {
 
 public:
   SeqScanner(bool breaks = false) 
-    : _lev(-1), _breaks(breaks) {}
+    : _lev(-1), _col(-1), _breaks(breaks) {}
 
   void add_level(char sep, TransFn fn);
 
   bool is_sep(char c) { return _seps.find(c) != str::npos; }
   bool is_end(char c) { return _seps[0] == c; }
 
-  void put(Any a)     { _in.push_back(a); }
+  void put(Any a, int col);
   void put_sep(char c);
 
   Any  collect();
@@ -55,7 +55,7 @@ class Scanner {
   Flags  _flags;
   Stack  _stack;
   Queue  _queue;
-  int    _lin, _col, _inipos;
+  int    _lin, _col, _inicol;
   str    _acum;
 
   void _emit(Any a);

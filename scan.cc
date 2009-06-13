@@ -112,6 +112,11 @@ Any SeqScanner::collect() {
   return _trans[0](_acum[0]);
 }
 
+void SeqScanner::put(Any a, int col) {
+  _in.push_back(a); 
+  if (_col == -1) _col = col;
+}
+
 void SeqScanner::put_sep(char c) {
   int lev = _seps.find(c);
   assert(lev >= 0 && lev < int(_seps.size()));
@@ -185,7 +190,7 @@ void Scanner::_put_str(char c) {
 }
 
 void Scanner::_emit(Any a) {
-  _stack.front()->put(a);
+  _stack.front()->put(a, _inicol);
 }
 
 void Scanner::_collect() {
@@ -224,7 +229,7 @@ void Scanner::_put_normal(char c) {
     _collect();
   }
   else {
-    if (_acum == "") _inipos = _col;
+    if (_acum == "") _inicol = _col;
     _acum += c;
   }
 }
