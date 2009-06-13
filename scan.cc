@@ -86,6 +86,7 @@ Any tuple_literal(Vec& v) {
   Tuple t;
   t->push_back(Sym("tuple"));
   t->append(v);
+  v.clear();
   return t;
 }
 
