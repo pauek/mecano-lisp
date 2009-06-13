@@ -52,6 +52,8 @@ Any _scan_atom(str s) {
 
 // SeqScanner /////////////////////////////////////////////
 
+// In TransFn's v has to be cleared.
+
 template<typename Seq>
 Any normal(Vec& v) {
   Any res;
