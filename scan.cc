@@ -265,6 +265,7 @@ void Scanner::_put_sep(char c) {
   if (_is_sep(open, c)) {
     SeqScanner *ps;
     switch (c) {
+    case ':': ps = new BlockScanner(); break;
     case '(': ps = new TupleScanner(); break;
     case '{': ps = new ListScanner(); break;
     case '`': ps = new QuoteScanner(); break;
@@ -294,11 +295,11 @@ void Scanner::_put_break() {
     }
     _pop();
   }
-  if (_stack.front()->inicol() != _col ||
-      !_stack.front()->breakable()) {
+  if (_stack.front()->inicol() != _col) {
     throw Error(_lin, _col, "Unexpected indentation");
   }
-  _stack.front()->put_break();
+  if (_stack.front()->breakable())
+    _stack.front()->put_break();
 }
 
 void Scanner::_put_normal(char c) {
