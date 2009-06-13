@@ -21,13 +21,13 @@ class SeqScanner {
   int   _lev, _col;
   Acum  _acum;
   Vec   _in;
-  bool  _breaks;
+  bool  _breakable;
 
   void _pop(int lev);
 
 public:
-  SeqScanner(bool breaks = false) 
-    : _lev(-1), _col(-1), _breaks(breaks) {}
+  SeqScanner(bool breakable = false) 
+    : _lev(-1), _col(-1), _breakable(breakable) {}
 
   void add_level(char sep, TransFn fn);
 
@@ -37,7 +37,7 @@ public:
   void put(Any a, int col);
   void put_sep(char c);
 
-  bool breakable() const { return _breaks; }
+  bool breakable() const { return _breakable; }
   int  inicol()    const { return _col; }
 
   Any  collect();
