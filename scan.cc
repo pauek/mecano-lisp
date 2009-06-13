@@ -181,7 +181,7 @@ void Scanner::_update_pos(char c) {
   if (_flags[endl]) {
     ++_lin, _col = 1;
     if (c == '\n') {
-      // _pop_all();
+      _pop_all();
     } else {
       _flags[endl] = false;
     }
@@ -243,6 +243,7 @@ void Scanner::_pop() {
 
 void Scanner::_pop_all() {
   while (_stack.size() > 1) _pop();
+  _pop();
 }
 
 void Scanner::_put_sep(char c) {
