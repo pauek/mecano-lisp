@@ -24,7 +24,7 @@ bool _is_sep(sep_type typ, char c) {
   static str _open =   "({[`:";
   static str _close =  ")}]'.";
   static str _middle = ";,";
-  static str _any = _open + _middle + _close;
+  static str _any = _open + _close + _middle;
 
   switch (typ) {
   case any:    return _is(_any, c);
