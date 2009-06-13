@@ -114,7 +114,7 @@ Any SeqScanner::collect() {
 
 void SeqScanner::put(Any a, int col) {
   _in.push_back(a); 
-  if (_col == -1) _col = col;
+  if (_inicol == -1) _inicol = col;
 }
 
 void SeqScanner::put_sep(char c) {

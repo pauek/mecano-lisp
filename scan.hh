@@ -18,7 +18,7 @@ class SeqScanner {
   typedef std::vector<Vec> Acum;
   str   _seps;
   Trans _trans;
-  int   _lev, _col;
+  int   _lev, _inicol;
   Acum  _acum;
   Vec   _in;
   bool  _breakable;
@@ -27,7 +27,7 @@ class SeqScanner {
 
 public:
   SeqScanner(bool breakable = false) 
-    : _lev(-1), _col(-1), _breakable(breakable) {}
+    : _lev(-1), _inicol(-1), _breakable(breakable) {}
 
   void add_level(char sep, TransFn fn);
 
@@ -38,7 +38,7 @@ public:
   void put_sep(char c);
 
   bool breakable() const { return _breakable; }
-  int  inicol()    const { return _col; }
+  int  inicol()    const { return _inicol; }
 
   Any  collect();
 };
