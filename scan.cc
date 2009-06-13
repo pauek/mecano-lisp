@@ -50,8 +50,6 @@ Any _scan_atom(str s) {
   return (_scan_int(s, v) ? v : Any(Sym(s)));
 }
 
-// SeqScanner /////////////////////////////////////////////
-
 // In TransFn's the vector 'v' has to be cleared.
 
 template<typename Seq>
@@ -72,12 +70,22 @@ Any rmv_singles(Vec& v) {
   return res;
 }
 
-Any add_tuple(Vec& v) {
+template<typename Seq>
+Any make(Vec& v) {
+  Any a = rmv_singles< id<Seq> >(v);
+  Seq t = Seq::from(a);
+  return (t.not_null() ? t : Seq(v[0]));
+}
+
+Any make_quote(Vec& v) {
+  Any a = rmv_singles< id<List> >(v);
+  return Tuple(Sym("quote"), a);
+}
+
+Any tuple_literal(Vec& v) {
   Tuple t;
   t->push_back(Sym("tuple"));
-  for (size_t k = 0; k < v.size(); k++) {
-    t->push_back(v[k]);
-  }
+  t->append(v);
   return t;
 }
 
@@ -124,12 +132,38 @@ void SeqScanner::put_sep(char c) {
   }
 }
 
-class ListScanner : public SeqScanner {
+class BlockScanner : public SeqScanner {
 public:
-  ListScanner() : SeqScanner(true) {
+  BlockScanner() : SeqScanner(true) {
     add_level('.', rmv_singles< id<List> >);
     add_level(';', rmv_singles< id<List> >);
-    add_level(',', rmv_singles<add_tuple>);
+    add_level(',', rmv_singles<tuple_literal>);
+  }
+};
+
+class ListScanner : public SeqScanner {
+public:
+  ListScanner() : SeqScanner() {
+    add_level('}', make<List>);
+    add_level(';', rmv_singles< id<List> >);
+    add_level(',', rmv_singles<tuple_literal>);
+  }
+};
+
+class TupleScanner : public SeqScanner {
+public:
+  TupleScanner() : SeqScanner() {
+    add_level(')', make<Tuple>);
+    add_level(',', rmv_singles<tuple_literal>);
+  }
+};
+
+class QuoteScanner : public SeqScanner {
+public:
+  QuoteScanner() : SeqScanner(true) {
+    add_level('\'', make_quote);
+    add_level(';', rmv_singles< id<List> >);
+    add_level(',', rmv_singles<tuple_literal>);
   }
 };
 
@@ -137,15 +171,15 @@ public:
 
 Scanner::Scanner () {
   _flags[endl] = true;
-  _lin = -1, _col = -1;
+  _lin = 0, _col = 0;
   _mode = normal;
   _acum = "";
-  _stack.push_back(new ListScanner());
+  _stack.push_back(new BlockScanner());
 }
 
 void Scanner::_update_pos(char c) {
   if (_flags[endl]) {
-    ++_lin, _col = 0;
+    ++_lin, _col = 1;
     if (c == '\n') {
       // _pop_all();
     } else {
@@ -198,8 +232,13 @@ void Scanner::_collect() {
 void Scanner::_pop() {
   int inicol = _stack.front()->inicol();
   Any a = _stack.front()->collect();
-  _stack.pop_front();
-  _stack.front()->put(a, inicol);
+  if (_stack.size() > 1) {
+    delete _stack.front();
+    _stack.pop_front();
+    _stack.front()->put(a, inicol);
+  } else {
+    _queue.push(a);
+  }
 }
 
 void Scanner::_pop_all() {
@@ -208,17 +247,26 @@ void Scanner::_pop_all() {
 
 void Scanner::_put_sep(char c) {
   if (_is_sep(open, c)) {
+    SeqScanner *ps;
+    switch (c) {
+    case '(': ps = new TupleScanner(); break;
+    case '{': ps = new ListScanner(); break;
+    case '`': ps = new QuoteScanner(); break;
+    }
+    _stack.push_front(ps);
   }
   else if (_is_sep(middle, c)) {
+    if (!_stack.front()->is_sep(c))
+      throw Error(_lin, _col, "Unexpected separator");
     _stack.front()->put_sep(c);
   }
   else if (_is_sep(close, c)) {
-    if (_stack.front()->is_end(c)) {
-      _pop_all();
-      _queue.push(_stack.front()->collect());
+    while (!_stack.front()->is_end(c)) {
+      if (_stack.size() == 1) 
+	throw Error(_lin, _col, "Unexpected close");
+      _pop();
     }
-    else 
-      throw Error(_lin, _col, "Unexpected close");
+    _pop();
   }
 }
 

@@ -8,6 +8,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <iterator>
 #include <gc/gc_cpp.h>
 
 namespace mc {
@@ -94,15 +95,19 @@ protected:
   explicit Box(_box_<T> *p) : _pbox(p) {}
   void init(const T& t) { _pbox = new _box_<T>(t); }
 
+  void _ck() const { 
+    if (!_pbox) throw TypeError();
+  }
+    
 public:
   Box() : _pbox(NULL) {}
   Box(Any a) : _pbox(a.as<T>()._pbox) {}
   explicit Box(const T& t) { init(t); }
 
   const Box<T>& operator=(const T& t);
-  T *operator->() { return &(_pbox->t); }
-  const T *operator->() const { return &(_pbox->t); }
-  const T& operator*() const { return _pbox->t; }
+  T *operator->() { _ck(); return &(_pbox->t); }
+  const T *operator->() const { _ck(); return &(_pbox->t); }
+  const T& operator*()  const { _ck(); return _pbox->t; }
 
   // operator T() const { return _pbox->t; }
 
@@ -167,7 +172,7 @@ inline T& Box<T>::unbox() {
 
 template<typename T>
 inline const Box<T>& Box<T>::operator=(const T& t) {
-  _pbox->t = t;
+  _ck(); _pbox->t = t;
   return *this;
 }
 
@@ -237,8 +242,13 @@ public:
   Sym(sym s) : Box<sym>(s) {}
 };
 
-struct tup : public std::vector<Any> {};
-struct lst : public std::vector<Any> {};
+struct seq : public std::vector<Any> {
+  void append(const std::vector<Any>& v) {
+    copy(v.begin(), v.end(), back_inserter(*this));
+  }
+};
+struct tup : seq {};
+struct lst : seq {};
 
 std::ostream& operator<<(std::ostream&, const _bool&);
 std::ostream& operator<<(std::ostream&, const sym&);
@@ -249,6 +259,10 @@ template<typename seq>
 class Seq : public Box<seq> {
   void init() { Box<seq>::init(seq()); }
   void add(Any v) { (*this)->push_back(v); }
+
+  struct _dummy_ {};
+
+  explicit Seq(_dummy_) {} // Nil
 public:
   Seq() { init(); }
 
@@ -281,7 +295,9 @@ public:
   }
 
   static Seq from(Any a) {
-    return Seq(*Box<seq>(a));
+    Box<seq> box(a);
+    if (box.is_null()) return Seq(_dummy_());
+    else return Seq(*box);
   }
 };
 
@@ -596,40 +612,38 @@ inline void eval(VM& vm, const sym& s) {
   vm.yield(vm.env->lookup(s));
 }
 
-inline void eval(VM& vm, const tup& t) {
-  struct tupCont : public Continuation {
-    const tup& t;
-    Tuple result;
-    unsigned int k;
-    tupCont(const tup& _t) : t(_t), k(0) {}
-    void call(VM& vm, Any a) {
-      result->push_back(a);
-      if (++k < t.size()) {
-	vm.val = t[k];
-      } else {
-	vm.pop();
-	vm.yield(result);
-      }
+template<typename seq>
+struct seqCont : public Continuation {
+  const seq& l;
+  unsigned int k;
+  seqCont(const seq& _l) : l(_l), k(0) {}
+  void call(VM& vm, Any a) {
+    if (++k < l.size()) {
+      vm.val = l[k];
+    } else {
+      vm.pop();
+      vm.yield(a);
     }
-  };
+  }
+};
+
+typedef seqCont<lst> lstCont;
+
+struct tupCont : public seqCont<tup> {
+  Tuple result;
+  tupCont(const tup& t) : seqCont<tup>(t) {}
+  void call(VM& vm, Any a) {
+    result->push_back(a);
+    seqCont<tup>::call(vm, a);
+  }
+};
+
+inline void eval(VM& vm, const tup& t) {
   vm.push(new tupCont(t));
   vm.val = t[0];
 };
 
 inline void eval(VM& vm, const lst& l) {
-  struct lstCont : public Continuation {
-    const lst& l;
-    unsigned int k;
-    lstCont(const lst& _l) : l(_l), k(0) {}
-    void call(VM& vm, Any a) {
-      if (++k < l.size()) {
-	vm.val = l[k];
-      } else {
-	vm.pop();
-	vm.yield(a);
-      }
-    }
-  };
   vm.push(new lstCont(l));
   vm.val = l[0];
 }
