@@ -183,11 +183,12 @@ void Scanner::_reset() {
   _lin = 0, _col = 0;
   _mode = normal;
   _acum = "";
-  _stack.clear(); // TODO: Memory leak...
-  _stack.push_back(new BlockScanner());
+  _pop_all();
+  _queue = Queue(); // no clear, grr..
 }
 
 Scanner::Scanner () {
+  _stack.push_back(new BlockScanner());
   _reset();
 }
 
@@ -345,7 +346,8 @@ void Scanner::put(char c) {
     _put(c);
   }
   catch (Error& e) {
-    cerr << e.lin << ':' << e.col << ": " << e.msg << endl;
+    cerr << e.lin << ':' << e.col << ": " 
+	 << e.msg << endl;
     _reset();
   }
 }
@@ -358,7 +360,8 @@ void Scanner::putline(str line) {
     _put('\n');
   }
   catch (Error& e) {
-    cerr << e.lin << ':' << e.col << ": " << e.msg << endl;
+    cerr << e.lin << ':' << e.col << ": " 
+	 << e.msg << endl;
     _reset();
   }
 }
