@@ -634,7 +634,7 @@ struct tupCont : public seqCont<tup> {
   tupCont(const tup& t) : seqCont<tup>(t) {}
   void call(VM& vm, Any a) {
     result->push_back(a);
-    seqCont<tup>::call(vm, a);
+    seqCont<tup>::call(vm, result);
   }
 };
 
