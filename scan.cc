@@ -55,39 +55,34 @@ Any _scan_atom(str s) {
 // In TransFn's the vector 'v' has to be cleared.
 
 template<typename Seq>
-Any normal(Vec& v) {
-  Any res;
-  if (v.size() == 1) {
-    res = v[0], v.clear();
-  } else if (v.size() > 1) {
-    Seq s;
-    s->swap(v);
-    res = s;
-  }
-  return res;
-}
-
-template<typename Seq>
-Any keep_singles(Vec& v) {
+Any id(Vec& v) {
   Seq s;
   s->swap(v);
   return s;
 }
 
-Any add_tuple(Vec& v) {
+template<TransFn f>
+Any rmv_singles(Vec& v) {
   Any res;
   if (v.size() == 1) {
-    res = v[0];
+    res = v[0], v.clear();
   } else if (v.size() > 1) {
-    Tuple t;
-    t->push_back(Sym("tuple"));
-    for (size_t k = 0; k < v.size(); k++) {
-      t->push_back(v[k]);
-    }
-    res = t;
+    res = f(v);
   }
-  v.clear();
   return res;
+}
+
+Any add_tuple(Vec& v) {
+  Tuple t;
+  t->push_back(Sym("tuple"));
+  for (size_t k = 0; k < v.size(); k++) {
+    t->push_back(v[k]);
+  }
+  return t;
+}
+
+Any normal(Vec& v) {
+  return rmv_singles< id<Tuple> >(v);
 }
 
 // SeqScanner //////////////////////////////////////////////
@@ -106,7 +101,7 @@ void SeqScanner::_pop(int lev) {
 
 Any SeqScanner::collect() {
   if (!_in.empty()) {
-    _acum[_lev].push_back(normal<Tuple>(_in));
+    _acum[_lev].push_back(normal(_in));
   } 
   while (_lev > 0) _pop(_lev--);
   return _trans[0](_acum[0]);
@@ -121,10 +116,10 @@ void SeqScanner::put_sep(char c) {
   int newlev = _seps.find(c);
   assert(newlev >= 0 && newlev < int(_seps.size()));
   if (newlev >= _lev) {
-    _acum[newlev].push_back(normal<Tuple>(_in));
+    _acum[newlev].push_back(normal(_in));
     _lev = newlev;
   } else {
-    _acum[_lev].push_back(normal<Tuple>(_in));
+    _acum[_lev].push_back(normal(_in));
     while (_lev > newlev) _pop(_lev--);
   }
 }
@@ -132,9 +127,9 @@ void SeqScanner::put_sep(char c) {
 class ListScanner : public SeqScanner {
 public:
   ListScanner() : SeqScanner(true) {
-    add_level('.', normal<List>);
-    add_level(';', normal<List>);
-    add_level(',', add_tuple);
+    add_level('.', rmv_singles< id<List> >);
+    add_level(';', rmv_singles< id<List> >);
+    add_level(',', rmv_singles<add_tuple>);
   }
 };
 
