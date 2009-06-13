@@ -21,18 +21,15 @@ class SeqScanner {
   int   _lev;
   Acum  _acum;
   Vec   _in;
+  bool  _breaks;
 
   void _pop(int lev);
 
 public:
-  SeqScanner() : _lev(-1) {}
+  SeqScanner(bool breaks = false) 
+    : _lev(-1), _breaks(breaks) {}
 
-  void add_level(char sep, TransFn fn) {
-    _seps += sep;
-    _trans.push_back(fn);
-    _acum.push_back(Vec());
-    _lev = _seps.size() - 1;
-  }
+  void add_level(char sep, TransFn fn);
 
   bool is_sep(char c) { return _seps.find(c) != str::npos; }
   bool is_end(char c) { return _seps[0] == c; }

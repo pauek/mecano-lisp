@@ -90,6 +90,14 @@ Any add_tuple(Vec& v) {
   return res;
 }
 
+// SeqScanner //////////////////////////////////////////////
+
+void SeqScanner::add_level(char sep, TransFn fn) {
+  _seps += sep;
+  _trans.push_back(fn);
+  _acum.push_back(Vec());
+  _lev = _seps.size() - 1;
+}
 
 void SeqScanner::_pop(int lev) {
   assert(lev >= 1 && lev < int(_acum.size()));
@@ -118,7 +126,7 @@ void SeqScanner::put_sep(char c) {
 
 class ListScanner : public SeqScanner {
 public:
-  ListScanner() {
+  ListScanner() : SeqScanner(true) {
     add_level('.', normal<List>);
     add_level(';', normal<List>);
     add_level(',', add_tuple);
