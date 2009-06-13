@@ -37,6 +37,9 @@ public:
   void put(Any a, int col);
   void put_sep(char c);
 
+  bool breakable() const { return _breaks; }
+  int  inicol()    const { return _col; }
+
   Any  collect();
 };
 
@@ -72,7 +75,12 @@ public:
   void putline(str line);
   bool get(Any& a);
 
-  struct Error {};
+  struct Error {
+    int lin, col;
+    str msg;
+    Error(int l, int c, str m)
+      : lin(l), col(c), msg(m) {}
+  };
 };
 
 

@@ -210,7 +210,8 @@ void Scanner::_put_sep(char c) {
     if (_stack.front()->is_end(c)) {
       _queue.push(_stack.front()->collect());
     }
-    else throw Error();
+    else 
+      throw Error(_lin, _col, "Unexpected close");
   }
 }
 
