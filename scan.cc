@@ -118,14 +118,14 @@ void SeqScanner::put(Any a, int col) {
 }
 
 void SeqScanner::put_sep(char c) {
-  int lev = _seps.find(c);
-  assert(lev >= 0 && lev < int(_seps.size()));
-  if (lev >= _lev) {
-    _acum[lev].push_back(normal<Tuple>(_in));
-    _lev = lev;
+  int newlev = _seps.find(c);
+  assert(newlev >= 0 && newlev < int(_seps.size()));
+  if (newlev >= _lev) {
+    _acum[newlev].push_back(normal<Tuple>(_in));
+    _lev = newlev;
   } else {
     _acum[_lev].push_back(normal<Tuple>(_in));
-    while (_lev > lev) _pop(_lev--);
+    while (_lev > newlev) _pop(_lev--);
   }
 }
 
