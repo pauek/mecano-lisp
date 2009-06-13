@@ -36,6 +36,7 @@ public:
 
   void put(Any a, int col);
   void put_sep(char c);
+  void put_break();
 
   bool breakable() const { return _breakable; }
   int  inicol()    const { return _inicol; }
@@ -46,7 +47,8 @@ public:
 class Scanner {
   enum Config {
     escape = 1,
-    endl = 2,
+    endln = 2,
+    beginln = 4,
   };
   enum Mode { normal, string, comment };
 
@@ -64,11 +66,14 @@ class Scanner {
   void _emit(Any a);
   void _collect();
   void _update_pos(char c);
+  void _put(char c);
   void _put_str(char c);
   void _put_normal(char c);
   void _put_sep(char c);
+  void _put_break();
   void _pop();
   void _pop_all();
+  void _reset();
 
 public:
   Scanner();

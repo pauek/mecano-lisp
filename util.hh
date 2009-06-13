@@ -26,6 +26,8 @@ public:
     }
   };
 
+  void clear() { _flags = 0; }
+  
   BoolRef operator[](Enum e) {
     return BoolRef(_flags, e);
   }

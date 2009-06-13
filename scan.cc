@@ -113,12 +113,15 @@ Any SeqScanner::collect() {
     _acum[_lev].push_back(normal(_in));
   } 
   while (_lev > 0) _pop(_lev--);
+  _inicol = -1;
   return _trans[0](_acum[0]);
 }
 
 void SeqScanner::put(Any a, int col) {
   _in.push_back(a); 
-  if (_inicol == -1) _inicol = col;
+  if (_inicol == -1) {
+    _inicol = col;
+  }
 }
 
 void SeqScanner::put_sep(char c) {
@@ -131,6 +134,10 @@ void SeqScanner::put_sep(char c) {
     _acum[_lev].push_back(normal(_in));
     while (_lev > newlev) _pop(_lev--);
   }
+}
+
+void SeqScanner::put_break() {
+  put_sep(_seps[1]);
 }
 
 class BlockScanner : public SeqScanner {
@@ -170,25 +177,32 @@ public:
 
 // Scanner ////////////////////////////////////////////////
 
-Scanner::Scanner () {
-  _flags[endl] = true;
+void Scanner::_reset() {
+  _flags.clear();
+  _flags[endln] = true;
   _lin = 0, _col = 0;
   _mode = normal;
   _acum = "";
+  _stack.clear(); // TODO: Memory leak...
   _stack.push_back(new BlockScanner());
 }
 
+Scanner::Scanner () {
+  _reset();
+}
+
 void Scanner::_update_pos(char c) {
-  if (_flags[endl]) {
+  if (_flags[endln]) {
     ++_lin, _col = 1;
+    _flags[beginln] = true;
     if (c == '\n') {
       _pop_all();
     } else {
-      _flags[endl] = false;
+      _flags[endln] = false;
     }
   } else {
     ++_col;
-    _flags[endl] = (c == '\n');
+    _flags[endln] = (c == '\n');
   }
 }
 
@@ -272,6 +286,21 @@ void Scanner::_put_sep(char c) {
   }
 }
 
+void Scanner::_put_break() {
+  while (_col < _stack.front()->inicol()) {
+    if (_stack.size() == 1 ||
+	!_stack.front()->breakable()) {
+      throw Error(_lin, _col, "Unexpected indentation");
+    }
+    _pop();
+  }
+  if (_stack.front()->inicol() != _col ||
+      !_stack.front()->breakable()) {
+    throw Error(_lin, _col, "Unexpected indentation");
+  }
+  _stack.front()->put_break();
+}
+
 void Scanner::_put_normal(char c) {
   if (c == '#') {
     _mode = comment;
@@ -287,32 +316,50 @@ void Scanner::_put_normal(char c) {
     _collect();
   }
   else {
-    if (_acum == "") _inicol = _col;
+    if (_acum == "") {
+      _inicol = _col;
+      if (_flags[beginln] && 
+	  _stack.front()->inicol() != -1 &&
+	  _col <= _stack.front()->inicol()) 
+	_put_break();
+    }
     _acum += c;
+  }
+
+  if (!_is_space(c)) _flags[beginln] = false;
+}
+
+void Scanner::_put(char c) {
+  _update_pos(c);
+  switch (_mode) {
+  case normal: _put_normal(c); break;
+  case string: _put_str(c); break;
+  case comment: 
+    if (c == '\n') _mode = normal;
   }
 }
 
 void Scanner::put(char c) {
   try {
-    _update_pos(c);
-    switch (_mode) {
-    case normal: _put_normal(c); break;
-    case string: _put_str(c); break;
-    case comment: 
-      if (c == '\n') _mode = normal;
-    }
+    _put(c);
   }
   catch (Error& e) {
-    cout << e.lin << ':' << e.col << ": "
-	 << e.msg << endl;
+    cerr << e.lin << ':' << e.col << ": " << e.msg << endl;
+    _reset();
   }
 }
 
 void Scanner::putline(str line) {
-  for (size_t k = 0; k < line.size(); k++) {
-    put(line[k]);
+  try {
+    for (size_t k = 0; k < line.size(); k++) {
+      _put(line[k]);
+    }
+    _put('\n');
   }
-  put('\n');
+  catch (Error& e) {
+    cerr << e.lin << ':' << e.col << ": " << e.msg << endl;
+    _reset();
+  }
 }
 
 bool Scanner::get(Any& a) {
