@@ -195,6 +195,17 @@ void Scanner::_collect() {
   }
 }
 
+void Scanner::_pop() {
+  int inicol = _stack.front()->inicol();
+  Any a = _stack.front()->collect();
+  _stack.pop_front();
+  _stack.front()->put(a, inicol);
+}
+
+void Scanner::_pop_all() {
+  while (_stack.size() > 1) _pop();
+}
+
 void Scanner::_put_sep(char c) {
   if (_is_sep(open, c)) {
   }
@@ -203,6 +214,7 @@ void Scanner::_put_sep(char c) {
   }
   else if (_is_sep(close, c)) {
     if (_stack.front()->is_end(c)) {
+      _pop_all();
       _queue.push(_stack.front()->collect());
     }
     else 

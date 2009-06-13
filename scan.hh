@@ -67,6 +67,8 @@ class Scanner {
   void _put_str(char c);
   void _put_normal(char c);
   void _put_sep(char c);
+  void _pop();
+  void _pop_all();
 
 public:
   Scanner();
