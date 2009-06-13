@@ -231,12 +231,18 @@ void Scanner::_put_normal(char c) {
 }
 
 void Scanner::put(char c) {
-  _update_pos(c);
-  switch (_mode) {
-  case normal: _put_normal(c); break;
-  case string: _put_str(c); break;
-  case comment: 
-    if (c == '\n') _mode = normal;
+  try {
+    _update_pos(c);
+    switch (_mode) {
+    case normal: _put_normal(c); break;
+    case string: _put_str(c); break;
+    case comment: 
+      if (c == '\n') _mode = normal;
+    }
+  }
+  catch (Error& e) {
+    cout << e.lin << ':' << e.col << ": "
+	 << e.msg << endl;
   }
 }
 

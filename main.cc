@@ -22,7 +22,7 @@ int main() {
   VM vm;
   Scanner S;
   string line = read_line("> ");
-  while (line != "") {
+  while (true) {
     S.putline(line);
     Any a;
     while (S.get(a)) {
