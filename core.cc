@@ -147,6 +147,30 @@ void apply(VM& vm, Tuple args) {
   eval(vm, call(form));
 }
 
+typedef Any (*UnaryFn)(Any a);
+
+template<UnaryFn fn>
+Any unary(Tuple args) {
+  if (args->size() > 2) {
+    throw TypeError("too many arguments");
+  }
+  return fn(args[1]);
+}
+
+template<int N>
+Any nth(Any a) {
+  Tuple t = Tuple::from(a);
+  return (t.not_null() && t->size() >= N ? t[N-1] : Nil);
+}
+
+Any len(Any a) {
+  Tuple t = Tuple::from(a);
+  if (t.not_null()) return Int(t->size());
+  List l = List::from(a);
+  if (l.not_null()) return Int(l->size());
+  throw TypeError("len: argument is not a sequence");
+}
+
 Any sum(Tuple args) {
   // TODO: Handle reals, strings, lists, tuples, etc.
   int sum = 0;
@@ -172,8 +196,14 @@ void VM::reset() {
 
 void VM::init() {
   env->bind(sym("quit"), Prim(quit));
-  env->bind(sym("+"), Prim(direct<sum>));
   env->bind(sym("apply"), Prim(apply));
+  env->bind(sym("+"), Prim(direct<sum>));
+  env->bind(sym("1st"), Prim(direct< unary< nth<1> > >));
+  env->bind(sym("2nd"), Prim(direct< unary< nth<2> > >));
+  env->bind(sym("3rd"), Prim(direct< unary< nth<3> > >));
+  env->bind(sym("4th"), Prim(direct< unary< nth<4> > >));
+  env->bind(sym("5th"), Prim(direct< unary< nth<5> > >));
+  env->bind(sym("len"), Prim(direct< unary<len> >));
 }
 
 bool VM::step() {
@@ -184,12 +214,14 @@ bool VM::step() {
       cont->call(*this, val);
     }
     else {
+      if (val.is_null()) return false;
       val->eval(*this);
     }
     return true;
   }
   catch (Error& e) {
     cerr << "Error: " << e.msg << endl;
+    val = Nil;
     return false;
   }
 }
