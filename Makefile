@@ -8,7 +8,7 @@ else
 	CXXFLAGS += -g3 -fno-inline
 endif
 
-SRC = core.cc scan.cc parse.cc main.cc
+SRC = core.cc scan.cc parse.cc prim.cc main.cc
 OBJ = ${SRC:.cc=.o}
 
 all: mecano

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include "core.hh"
+#include "prim.hh"
 using namespace std;
 
 namespace mc {
@@ -121,68 +122,6 @@ void Env::bind(sym s, Any a) {
   }
 }
 
-// Primitives //////////////////////////////////////////////
-
-typedef Any (*SimpleFn)(Tuple args);
-
-template<SimpleFn fn>
-void direct(VM& vm, Tuple args) {
-  vm.yield(fn(args));
-}
-
-void quit(VM& vm, Tuple args) {
-  exit(0);
-}
-
-void apply(VM& vm, Tuple args) {
-  if (args->size() != 3) {
-    throw TypeError("apply: need exactly two arguments");
-  }
-  Tuple form(args[1]);
-  Tuple prms = Tuple::from(args[2]);
-  if (prms.is_null()) {
-    throw TypeError("apply: second argument must be a tuple");
-  }
-  form->append(*prms);
-  eval(vm, call(form));
-}
-
-typedef Any (*UnaryFn)(Any a);
-
-template<UnaryFn fn>
-Any unary(Tuple args) {
-  if (args->size() > 2) {
-    throw TypeError("too many arguments");
-  }
-  return fn(args[1]);
-}
-
-template<int N>
-Any nth(Any a) {
-  Tuple t = Tuple::from(a);
-  return (t.not_null() && t->size() >= N ? t[N-1] : Nil);
-}
-
-Any len(Any a) {
-  Tuple t = Tuple::from(a);
-  if (t.not_null()) return Int(t->size());
-  List l = List::from(a);
-  if (l.not_null()) return Int(l->size());
-  throw TypeError("len: argument is not a sequence");
-}
-
-Any sum(Tuple args) {
-  // TODO: Handle reals, strings, lists, tuples, etc.
-  int sum = 0;
-  if (!args->empty()) {
-    tup::iterator i = args->begin();
-    while (i != args->end()) {
-      Int n = *i++;
-      if (n.not_null()) sum += *n;
-    }
-  }
-  return Int(sum);
-}
 
 // Virtual Machine /////////////////////////////////////////
 
