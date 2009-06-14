@@ -18,8 +18,16 @@ typedef std::string str;
 struct VM;
 
 // exceptions
-struct NullPointer {};
-struct TypeError {};
+struct Error { str msg; };
+
+template<int N> 
+struct error : public Error {
+  enum { id = N };
+  error(str m = "") { msg = m; }
+};
+
+typedef error<1> NullPointer;
+typedef error<2> TypeError;
 
 // Boxing //////////////////////////////////////////////////
 
@@ -345,14 +353,12 @@ struct VM {
   Env          *env;
   Continuation *cont;
   bool          breturn, berror;
-  str           errmsg;
 
   VM() { reset(); }
   
   void reset();
 
   void init();
-  void error(str e)  { berror = true, errmsg = e; }
   void yield(Any a)  { val = a, breturn = true; }
   void push(Continuation *c) 
                      { c->prev = cont, cont = c; }
@@ -385,13 +391,13 @@ typedef Box<func> Func;
 
 class prim : public Executable {
 public:
-  typedef Any (*Fn)(Tuple args);
+  typedef void (*Fn)(VM& vm, Tuple args);
 private:
   Fn _fn;
 public:
   prim(Fn f) : _fn(f) {}
   void exec(VM& vm, Tuple locals) {
-    vm.yield(_fn(locals));
+    _fn(vm, locals);
   }
   str type() const { return "Prim"; }
   operator func() { return func(this); }
@@ -538,13 +544,11 @@ public:
     vm.pop();
     Tuple form = Tuple::from(a);
     if (form.is_null()) {
-      vm.error("Call: not calling tuple!");
-      return;
+      throw TypeError("Call: not calling tuple!");
     }
     Func f = form[0];
     if (f.is_null()) {
-      vm.error("Call: head is not a function");
-      return;
+      throw TypeError("Call: not calling tuple!");
     }
     f->exec(vm, form);
   }

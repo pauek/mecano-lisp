@@ -123,9 +123,28 @@ void Env::bind(sym s, Any a) {
 
 // Primitives //////////////////////////////////////////////
 
-Any quit(Tuple args) {
+typedef Any (*SimpleFn)(Tuple args);
+
+template<SimpleFn fn>
+void direct(VM& vm, Tuple args) {
+  vm.yield(fn(args));
+}
+
+void quit(VM& vm, Tuple args) {
   exit(0);
-  return Nil;
+}
+
+void apply(VM& vm, Tuple args) {
+  if (args->size() != 3) {
+    throw TypeError("apply: need exactly two arguments");
+  }
+  Tuple form(args[1]);
+  Tuple prms = Tuple::from(args[2]);
+  if (prms.is_null()) {
+    throw TypeError("apply: second argument must be a tuple");
+  }
+  form->append(*prms);
+  eval(vm, call(form));
 }
 
 Any sum(Tuple args) {
@@ -147,31 +166,32 @@ void VM::reset() {
   berror = breturn = false;
   cont = NULL;
   val = Nil;
-  errmsg = "";
   env = new Env();
   init();
 }
 
 void VM::init() {
   env->bind(sym("quit"), Prim(quit));
-  env->bind(sym("+"), Prim(sum));
+  env->bind(sym("+"), Prim(direct<sum>));
+  env->bind(sym("apply"), Prim(apply));
 }
 
 bool VM::step() {
-  if (berror) {
-    cerr << "Error: " << errmsg << endl;
+  try {
+    if (breturn) {
+      breturn = false;
+      if (!cont) return false;
+      cont->call(*this, val);
+    }
+    else {
+      val->eval(*this);
+    }
+    return true;
+  }
+  catch (Error& e) {
+    cerr << "Error: " << e.msg << endl;
     return false;
   }
-  if (breturn) {
-    breturn = false;
-    if (!cont) return false;
-    cont->call(*this, val);
-  }
-  else {
-    val->eval(*this);
-  }
-  return true;
 }
-
 
 } // namespace
