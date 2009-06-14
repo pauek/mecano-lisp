@@ -90,6 +90,8 @@ public:
   };
 };
 
+// Parse
+Any parse(Any in);
 
 } // namespace
 

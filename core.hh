@@ -537,9 +537,7 @@ public:
   static void cont(VM& vm, const Cont<call>& c, Any a) {
     vm.pop();
     Tuple form = Tuple::from(a);
-    std::cout << form << std::endl;
     if (form.is_null()) {
-      std::cout << form << std::endl;
       vm.error("Call: not calling tuple!");
       return;
     }

@@ -82,7 +82,6 @@ Env *Env::extend(Any params, Tuple locals) {
   Env *E = new Env;
   E->_upper = this;
   E->_locals = locals;
-  cout << "extend " << params << ' ' << locals << endl;
 
   Tuple transl = Tuple::from(params);
   if (transl.not_null()) {
@@ -124,6 +123,11 @@ void Env::bind(sym s, Any a) {
 
 // Primitives //////////////////////////////////////////////
 
+Any quit(Tuple args) {
+  exit(0);
+  return Nil;
+}
+
 Any sum(Tuple args) {
   // TODO: Handle reals, strings, lists, tuples, etc.
   int sum = 0;
@@ -149,6 +153,7 @@ void VM::reset() {
 }
 
 void VM::init() {
+  env->bind(sym("quit"), Prim(quit));
   env->bind(sym("+"), Prim(sum));
 }
 
@@ -163,7 +168,6 @@ bool VM::step() {
     cont->call(*this, val);
   }
   else {
-    cout << "Eval [" << val << "]" << endl;
     val->eval(*this);
   }
   return true;
