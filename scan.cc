@@ -373,4 +373,8 @@ bool Scanner::get(Any& a) {
   return true;
 }
 
+bool Scanner::avail() const {
+  return !_queue.empty();
+}
+
 } // namespace

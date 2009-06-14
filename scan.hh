@@ -81,6 +81,7 @@ public:
   void put(char c);
   void putline(str line);
   bool get(Any& a);
+  bool avail() const;
 
   struct Error {
     int lin, col;
