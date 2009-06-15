@@ -19,9 +19,10 @@ struct Config {
 
 void parse_args(int argc, char *argv[], Config& conf) {
   for (int k = 1; k < argc; k++) {
-    if (string(argv[k]) == "-p") 
+    const string argk(argv[k]);
+    if (argk == "-p" || argk == "--parse-only") 
       conf.parse_only = true;
-    else if (string(argv[k]) == "-s")
+    else if (argk == "-s" || argk == "--scan-only")
       conf.scan_only = true;
     else 
       conf.file = argv[k];
