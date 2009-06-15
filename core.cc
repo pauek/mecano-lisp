@@ -31,7 +31,7 @@ ostream& operator<<(ostream& o, const tup& t) {
   o << "(";
   tup::const_iterator i = t.begin();
   if (i != t.end()) o << *i++;
-  while (i != t.end()) o << ' ' << *i++;
+  while (i != t.end()) o << ", " << *i++;
   return o << ")";
 }
 
@@ -136,6 +136,7 @@ void VM::reset() {
 void VM::init() {
   env->bind(sym("quit"), Prim(quit));
   env->bind(sym("apply"), Prim(apply));
+  env->bind(sym("list"), Prim(direct<mklist>));
   env->bind(sym("+"), Prim(direct<sum>));
   env->bind(sym("<"), Prim(direct< pairwise<less> >));
   env->bind(sym("=="), Prim(direct< pairwise<equal> >));

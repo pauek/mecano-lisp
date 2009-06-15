@@ -184,6 +184,7 @@ public:
   }
 };
 
+
 // Scanner ////////////////////////////////////////////////
 
 void Scanner::_reset() {
@@ -388,8 +389,10 @@ bool Scanner::get(Any& a) {
   return true;
 }
 
-bool Scanner::avail() const {
-  return !_queue.empty();
+bool Scanner::busy() const {
+  return _mode == string || 
+    _stack.size() > 1 || 
+    (_stack.size() == 1 && _stack.front()->busy());
 }
 
 } // namespace

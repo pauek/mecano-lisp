@@ -40,6 +40,7 @@ public:
 
   bool breakable() const { return _breakable; }
   int  inicol()    const { return _inicol; }
+  bool busy()      const { return _inicol != -1; }
 
   bool collect(Any& a);
 };
@@ -81,7 +82,7 @@ public:
   void put(char c);
   void putline(str line);
   bool get(Any& a);
-  bool avail() const;
+  bool busy() const;
 
   struct Error {
     int lin, col;

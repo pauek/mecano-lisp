@@ -255,6 +255,11 @@ struct seq : public std::vector<Any> {
   void append(const std::vector<Any>& v) {
     copy(v.begin(), v.end(), back_inserter(*this));
   }
+
+  void append(std::vector<Any>::iterator begin,
+	      std::vector<Any>::iterator end) {
+    copy(begin, end, back_inserter(*this));
+  }
 };
 struct tup : seq {};
 struct lst : seq {};

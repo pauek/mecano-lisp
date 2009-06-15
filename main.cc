@@ -83,25 +83,20 @@ int main(int argc, char *argv[]) {
   string line = in->read_line(prompt1);
   while (!in->end()) {
     S.putline(line);
-    if (S.avail()) {
-      Any a;
-      while (S.get(a)) {
-	if (conf.scan_only) {
+    Any a;
+    while (S.get(a)) {
+      if (conf.scan_only) {
+	cout << a << endl;
+      } else {
+	a = parse(a);
+	if (conf.parse_only) {
 	  cout << a << endl;
 	} else {
-	  a = parse(a);
-	  if (conf.parse_only) {
-	    cout << a << endl;
-	  } else {
-	    vm.eval(a);
-	    if (vm.val.not_null()) 
-	      cout << vm.val << endl;
-	  }
+	  vm.eval(a);
+	  cout << vm.val << endl;
 	}
       }
-      line = in->read_line(prompt1);
-    } else {
-      line = in->read_line(prompt2);
     }
+    line = in->read_line(S.busy() ? prompt2 : prompt1);
   }
 }

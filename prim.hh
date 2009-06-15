@@ -47,6 +47,7 @@ Any  len(Any a);
 Any  less(Any a, Any b);
 Any  equal(Any a, Any b);
 Any  sum(Tuple args);
+Any  mklist(Tuple args);
 
 } // namespace
 
