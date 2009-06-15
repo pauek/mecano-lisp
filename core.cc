@@ -137,6 +137,8 @@ void VM::init() {
   env->bind(sym("quit"), Prim(quit));
   env->bind(sym("apply"), Prim(apply));
   env->bind(sym("+"), Prim(direct<sum>));
+  env->bind(sym("<"), Prim(direct< pairwise<less> >));
+  env->bind(sym("=="), Prim(direct< pairwise<equal> >));
   env->bind(sym("1st"), Prim(direct< unary< nth<1> > >));
   env->bind(sym("2nd"), Prim(direct< unary< nth<2> > >));
   env->bind(sym("3rd"), Prim(direct< unary< nth<3> > >));
