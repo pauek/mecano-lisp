@@ -52,11 +52,6 @@ for (i 1 10):
   print j
 # {(for (i 1 10) {(print i); (print j)})}
 
-for (i 1 10):
-  print i;
-  print j
-# {(for (i 1 10) {(print i); (print j)})}
-
 if (i > 7): print "i > 7".
    (i < 1): print "i < 1".
    else: print "hohoho".
