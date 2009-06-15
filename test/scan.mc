@@ -10,11 +10,18 @@ a; b.     # {a; b}
 a; b c.   # {a; (b c)}
 a b; c d. # {(a b); (c d)}
 
-a: b; c.
-# {(a {b; c})}
+{a}.        # {{a}}
+{a; b}.     # {{a; b}}
+{a b}.	    # {{(a b)}}
+{a b; c d}. # {{(a b); (c d)}}
 
-a: b c d; e f g.
-# {(a {(b c d); (e f g)})}
+a: b; c.            # {(a {b; c})}
+a: b c d; e f g.    # {(a {(b c d); (e f g)})}
+a: b c d.           # {(a {(b c d)})}
+
+a: 
+  b c d
+# {(a {(b c d)})}
 
 a: b c d
    e f g
@@ -24,13 +31,6 @@ a:
   b c d
   e f g
 # {(a, {(b, c, d); (e, f, g)})}
-
-a: b c d
-# {(a {(b c d)})}
-
-a: 
-  b c d
-# {(a {(b c d)})}
 
 x y
   z.
@@ -101,13 +101,13 @@ map1 =:
 let (a 1 b 2):
   print a
   print b
-# {(let (tuple (a 1) (b 2)) {(print a); (print b)})}
+# {(let (a 1 b 2) {(print a); (print b)})}
 
 let (a 1 
      b 2):
   print a
   print b
-# {(let (tuple (a 1) (b 2)) {(print a); (print b)})}
+# {(let (a 1 b 2) {(print a); (print b)})}
 
 let a 1 
     b 2:
