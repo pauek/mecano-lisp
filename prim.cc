@@ -30,6 +30,30 @@ Any len(Any a) {
   throw TypeError("len: argument is not a sequence");
 }
 
+Any equal(Any a, Any b) {
+  return Bool(a == b);
+}
+
+Any less(Any a, Any b) {
+  Int i(a);
+  if (i.not_null()) {
+    Int j(b);
+    if (j.is_null()) {
+      throw TypeError("less: args of different type");
+    }
+    return Bool(*i < *j);
+  }
+  Str sa(a);
+  if (sa.not_null()) {
+    Str sb = b;
+    if (sb.is_null()) {
+      throw TypeError("less: args of different type");
+    }
+    return Bool(*sa < *sb);
+  }
+  throw TypeError("less: wrong type");
+}
+
 Any sum(Tuple args) {
   // TODO: Handle reals, strings, lists, tuples, etc.
   int sum = 0;
