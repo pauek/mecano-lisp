@@ -121,9 +121,10 @@ let a 1
   b (z * t)
 # {((a + b) where {(a ((x + y) where {(x (% xx yy)); (y (= xx yy))})); (b (z * t))})}
 
-{a}.     # {(list a)}
-{a; b}.  # {(list a b)}
-{1; 2}   # {(list 1 2)}
+{a}.       # {(list a)}
+{a; b}.    # {(list a b)}
+{1; 2}.    # {(list 1 2)}
+{1; 2 3}   # {(list 1 (2 3))}
 
 def no x: is x nil
 # {(def no x {(is x nil)})}
