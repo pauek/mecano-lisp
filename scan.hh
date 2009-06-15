@@ -41,7 +41,7 @@ public:
   bool breakable() const { return _breakable; }
   int  inicol()    const { return _inicol; }
 
-  Any  collect();
+  bool collect(Any& a);
 };
 
 class Scanner {

@@ -105,16 +105,22 @@ void SeqScanner::add_level(char sep, TransFn fn) {
 
 void SeqScanner::_pop(int lev) {
   assert(lev >= 1 && lev < int(_acum.size()));
-  _acum[lev-1].push_back(_trans[lev](_acum[lev]));
+  if (!_acum[lev].empty())
+    _acum[lev-1].push_back(_trans[lev](_acum[lev]));
 }
 
-Any SeqScanner::collect() {
+bool SeqScanner::collect(Any& a) {
   if (!_in.empty()) {
     _acum[_lev].push_back(normal(_in));
   } 
   while (_lev > 0) _pop(_lev--);
   _inicol = -1;
-  return _trans[0](_acum[0]);
+  if (_acum[0].empty()) { 
+    return false;
+  } else {
+    a = _trans[0](_acum[0]);
+    return true;
+  }
 }
 
 void SeqScanner::put(Any a, int col) {
@@ -247,13 +253,16 @@ void Scanner::_collect() {
 
 void Scanner::_pop() {
   int inicol = _stack.front()->inicol();
-  Any a = _stack.front()->collect();
+  Any a;
+  bool coll = _stack.front()->collect(a);
   if (_stack.size() > 1) {
     delete _stack.front();
     _stack.pop_front();
-    _stack.front()->put(a, inicol);
+    if (coll)
+      _stack.front()->put(a, inicol);
   } else {
-    _queue.push(a);
+    if (coll)
+      _queue.push(a);
   }
 }
 
