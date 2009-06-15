@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <readline/readline.h>
+#include <readline/history.h>
 #include "core.hh"
 #include "scan.hh"
 using namespace mc;
@@ -48,6 +49,7 @@ struct FileInput : public Input {
 struct StandardInput : public Input {
   bool _end;
   StandardInput() : _end(false) {
+    using_history();
     cout << "Mecano v0.1" << endl;
   }
   bool end() const { return _end; }
@@ -58,6 +60,7 @@ struct StandardInput : public Input {
       cout << endl;
       return "";
     } else {
+      add_history(line);
       string ret(line);
       free(line);
       return ret;
