@@ -52,10 +52,15 @@ for (i 1 10):
   print j
 # {(for (i 1 10) {(print i); (print j)})}
 
-if (i > 2): print "i > 2".
-   (i > 3): print "i > 5".
-   else: print "nothing".
-# {(if (i > 2) {(print "i > 2")} (i > 3) {(print "i > 5")} else {(print "nothing")})}
+for (i 1 10):
+  print i;
+  print j
+# {(for (i 1 10) {(print i); (print j)})}
+
+if (i > 7): print "i > 7".
+   (i < 1): print "i < 1".
+   else: print "hohoho".
+# {(if (i > 7) {(print "i > 7")} (i < 1) {(print "i < 1")} else {(print "hohoho")})}
 
 a b:
     c

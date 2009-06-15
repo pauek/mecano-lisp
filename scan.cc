@@ -308,36 +308,39 @@ void Scanner::_put_break() {
     }
     _pop();
   }
-  if (_stack.front()->inicol() != _col) {
-    throw Error(_lin, _col, "Unexpected indentation");
+  if (_col == _stack.front()->inicol()) {
+    if (_stack.front()->breakable())
+      _stack.front()->put_break();
   }
-  if (_stack.front()->breakable())
-    _stack.front()->put_break();
+  else {
+    // throw Error(_lin, _col, "Unexpected indentation");
+  }
 }
 
 void Scanner::_put_normal(char c) {
   if (c == '#') {
     _mode = comment;
   }
-  else if (c == '"') {
-    _mode = string;
-  }
-  else if (_is_sep(any, c)) {
-    _collect();
-    _put_sep(c);
-  }
   else if (_is_space(c)) {
     _collect();
   }
   else {
-    if (_acum == "") {
-      _inicol = _col;
-      if (_flags[beginln] && 
-	  _stack.front()->inicol() != -1 &&
-	  _col <= _stack.front()->inicol()) 
-	_put_break();
+    if (_flags[beginln] && 
+	_stack.front()->inicol() != -1 &&
+	_col <= _stack.front()->inicol()) 
+      _put_break();
+
+    if (c == '"') {
+      _mode = string;
     }
-    _acum += c;
+    else if (_is_sep(any, c)) {
+      _collect();
+      _put_sep(c);
+    }
+    else {
+      if (_acum == "") _inicol = _col;
+      _acum += c;
+    }
   }
 
   if (!_is_space(c)) _flags[beginln] = false;
