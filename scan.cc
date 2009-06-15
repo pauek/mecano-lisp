@@ -202,7 +202,7 @@ void Scanner::_update_pos(char c) {
   if (_flags[endln]) {
     ++_lin, _col = 1;
     _flags[beginln] = true;
-    if (c == '\n') {
+    if (c == '\n' || c == '#') {
       _pop_all();
     } else {
       _flags[endln] = false;
