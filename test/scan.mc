@@ -107,7 +107,7 @@ let a 1
     b 2:
   print a
   print b
-# (let a 1 b 2 {(print a); (print b)})
+# {(let a 1 b 2 {(print a); (print b)})}
 
 (+ a b) where:
   a (x + y)
@@ -133,11 +133,12 @@ def assoc key al:
      (and (acons (car al))
           (is (caar al) key)): (car al)
      else: (assoc key (cdr al))
+
 # {(def assoc key al {(if (atom al) {nil} (and (acons (car al)) (is (caar al) key)) {(car al)} else {(assoc key (cdr al))})})}
 
-`a b c'
-# {(quote (a b c))}
+## `a b c'
+## {(quote (a b c))}
 
-`a @b c'
-# {(quote (a (unquote b) c))}
+## `a @b c'
+## {(quote (a (unquote b) c))}
 
