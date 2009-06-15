@@ -28,7 +28,10 @@ clean:
 	@rm -f $(OBJ) mecano
 	@echo "ok"
 
+test:
+	@test/test-mc.sh test/*.mc
+
 todo:
 	@grep -rInso 'TODO: \(.\+\)' *.cc *.hh test/*.cc || true
 
-.PHONY: all
+.PHONY: all test todo
