@@ -104,7 +104,7 @@ protected:
   void init(const T& t) { _pbox = new _box_<T>(t); }
 
   void _ck() const { 
-    if (!_pbox) throw TypeError();
+    if (!_pbox) throw TypeError("Type Error");
   }
     
 public:
@@ -186,7 +186,7 @@ inline const Box<T>& Box<T>::operator=(const T& t) {
 
 inline std::ostream& 
 operator<<(std::ostream& o, const Any& a) {
-  if (a._pany == NULL) o << "Nil";
+  if (a._pany == NULL) o << "nil";
   else a._pany->print(o);
   return o;
 }
@@ -210,11 +210,12 @@ struct _str {
   _str(str _s) : s(_s) {}
   _str(const char *_s) : s(_s) {}
   bool operator==(_str str) const { return s == str.s; }
+  bool operator<(_str str)  const { return s < str.s; }
 };
 
 inline std::ostream& 
 operator<<(std::ostream& o, const _bool& b) {
-  return o << (b.v ? "True" : "False");
+  return o << (b.v ? "true" : "false");
 }
 
 inline std::ostream& 
