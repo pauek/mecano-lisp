@@ -82,13 +82,16 @@ Any make_quote(Vec& v) {
   return Tuple(Sym("quote"), a);
 }
 
-Any tuple_literal(Vec& v) {
+Any literal(Vec& v, string name) {
   Tuple t;
-  t->push_back(Sym("tuple"));
+  t->push_back(Sym(name));
   t->append(v);
   v.clear();
   return t;
 }
+
+Any list_literal(Vec& v)  { return literal(v, "list"); }
+Any tuple_literal(Vec& v) { return literal(v, "tuple"); }
 
 Any normal(Vec& v) {
   return rmv_singles< id<Tuple> >(v);
@@ -149,7 +152,7 @@ void SeqScanner::put_break() {
 class BlockScanner : public SeqScanner {
 public:
   BlockScanner() : SeqScanner(true) {
-    add_level('.', rmv_singles< id<List> >);
+    add_level('.', make<List>);
     add_level(';', rmv_singles< id<List> >);
     add_level(',', rmv_singles<tuple_literal>);
   }
@@ -159,7 +162,7 @@ class ListScanner : public SeqScanner {
 public:
   ListScanner() : SeqScanner() {
     add_level('}', make<List>);
-    add_level(';', rmv_singles< id<List> >);
+    add_level(';', list_literal);
     add_level(',', rmv_singles<tuple_literal>);
   }
 };
