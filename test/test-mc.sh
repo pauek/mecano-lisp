@@ -27,7 +27,7 @@ for f in $*; do
   opts=$(sed -n '1p' $f | grep '^##' | cut -c3-)
   grep -v '^##' $f | grep '#' | sed 's/^.*# //' > $expected
   ./mecano $opts $f > $real
-  test-diff $f
+  test-diff ${file%.mc}
 done
 
 rm $real
