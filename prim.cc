@@ -22,6 +22,26 @@ void apply(VM& vm, Tuple args) {
   eval(vm, call(form));
 }
 
+struct savecc : public Executable {
+  Continuation *saved;
+  savecc(Continuation *s) : saved(s) {}
+  void exec(VM& vm, Tuple args) {
+    if (args->size() != 2) {
+      throw TypeError("savecc: need exactly one argument");
+    }
+    vm.cont = saved;
+    vm.val = args[1];
+  }
+  str type() const { return "SaveCC"; }
+};
+
+void callcc(VM& vm, Tuple args) {
+  if (args->size() != 2) {
+    throw TypeError("call/cc: need exactly one argument");
+  }
+  vm.val = Call(Tuple(args[1], Func(new savecc(vm.cont))));
+}
+
 Any len(Any a) {
   Tuple t = Tuple::from(a);
   if (t.not_null()) return Int(t->size());

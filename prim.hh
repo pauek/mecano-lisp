@@ -42,6 +42,7 @@ Any pairwise(Tuple args) {
 }
 
 void quit(VM& vm, Tuple args);
+void callcc(VM& vm, Tuple args);
 void apply(VM& vm, Tuple args);
 Any  len(Any a);
 Any  less(Any a, Any b);

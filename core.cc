@@ -136,6 +136,7 @@ void VM::reset() {
 void VM::init() {
   env->bind(sym("quit"), Prim(quit));
   env->bind(sym("apply"), Prim(apply));
+  env->bind(sym("call/cc"), Prim(callcc));
   env->bind(sym("list"), Prim(direct<mklist>));
   env->bind(sym("+"), Prim(direct<sum>));
   env->bind(sym("<"), Prim(direct< pairwise<less> >));
