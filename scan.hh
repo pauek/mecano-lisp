@@ -3,8 +3,10 @@
 #define scan_h
 
 #include <queue>
+#include <list>
 #include "core.hh"
 using std::queue;
+using std::list;
 
 namespace mc {
 
@@ -12,8 +14,8 @@ template<typename T>
 class Queue {
   queue<T> _queue;
 protected:
-  void _push(const T& t) { 
-    std::cout << t << std::endl;
+  void _enq(const T& t) { 
+    // std::cout << t << std::endl;
     _queue.push(t); 
   }
 public:
@@ -62,15 +64,71 @@ public:
     : _lin(-1), _col(-1), _mode(normal), _endl(true) {}
 
   void put(char c);
+  bool busy() const { 
+    return _mode == string || 
+      _mode == comment ||
+      (_mode == normal && _text != ""); 
+  }
 };
 
-class Scanner {
-  Tokenizer _T;
+struct SeqScanner {
+  std::vector<int> _indents;
+  int   _inilin, _inicol;
+  Tuple _acum;
+  char  _end;
+  bool  _can_break;
+  
+  SeqScanner(char end) 
+    : _end(end), _can_break(false) {}
+  
+  bool  busy() const { return !_acum->empty(); }
+  void  put(Token& t);
+  bool  is_end(char c) const { return _end == c; }
+  Token collect();
+
+  virtual bool is_sep(char c) const { return false; }
+  virtual void put_sep()  { assert(false); }
+  virtual Any  _collect() { return _acum; }
+};
+
+typedef SeqScanner TupleScanner;
+
+struct ListScanner : public SeqScanner {
+  char _sep;
+  List _list;
+
+  void _collect_tuple();
+
 public:
-  void put(char c) { _T.put(c); }
+  ListScanner(char sep, char end) 
+    : SeqScanner(end), _sep(sep) {}
+  
+  bool is_sep(char c) const { return _sep == c; }
+  void put_sep() { _collect_tuple(); }
+  Any  _collect();
+};
+
+class Scanner : public Queue<Any> {
+  Tokenizer _T;
+  list<SeqScanner *> _stack;
+
+  void _push(SeqScanner *s) {
+    _stack.push_front(s);
+  }
+
+  void _put(Token& t);
+  void _init();
+  void _pop();
+  void _pop_all();
+
+public:
+  Scanner();
+  void put(char c);
   void putline(str s);
-  bool get(Any& a);
-  bool busy() const { return false; }
+
+  bool busy() const { 
+    return _stack.front()->busy() || _T.busy(); 
+  }
 };
 
 // Parse

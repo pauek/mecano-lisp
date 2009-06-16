@@ -28,6 +28,7 @@ struct error : public Error {
 
 typedef error<1> NullPointer;
 typedef error<2> TypeError;
+typedef error<3> ScanError;
 
 // Boxing //////////////////////////////////////////////////
 

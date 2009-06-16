@@ -8,20 +8,22 @@ namespace mc {
 
 // separator ///////////////////////////////////////////////
 
-struct sep {
+struct punct {
   str text;
   operator str() { return text; }
-  sep(char c) { text += c; }
-  sep(const char* t) : text(t) {}
-  bool operator==(const sep& s) const { 
+  punct(char c) { text += c; }
+  punct(const char* t) : text(t) {}
+  bool operator==(const punct& s) const { 
     return text == s.text;
   }
 };
 
-EVAL_BASIC(Box<sep>, sep);
+EVAL_BASIC(Box<punct>, punct);
 
-ostream& operator<<(ostream& o, const sep& s) { 
-  return o << '\'' << s.text << '\'';
+ostream& operator<<(ostream& o, const punct& s) { 
+  if (s.text == "\n\n") o << "<double endl>";
+  else o << '\'' << s.text << '\'';
+  return o;
 }
 
 const string seps = ":;()";
@@ -46,11 +48,11 @@ void Tokenizer::_collect() {
 	_curr.val = Sym(_text);
       }
     }
-    _push(_curr);
+    _enq(_curr);
     _text = "";
   }
   if (_dot) {
-    _push(Token(_lin, _col-1, Box<sep>('.'))); 
+    _enq(Token(_lin, _col-1, Box<punct>('.'))); 
     _dot = false;
   }
 }
@@ -59,7 +61,7 @@ void Tokenizer::_collect() {
 void Tokenizer::_put_normal(char c) {
   if (c == '\n') {
     if (_endl && !_2endls) {
-      _push(Token(_lin, _col, Box<sep>("\n\n")));
+      _enq(Token(_lin, _col, Box<punct>("\n\n")));
       _2endls = true;
     }
     _endl = true;
@@ -71,7 +73,7 @@ void Tokenizer::_put_normal(char c) {
   if (isspace(c) || bsep) {
     _collect();
     if (bsep) {
-      _push(Token(_lin, _col, Box<sep>(c)));
+      _enq(Token(_lin, _col, Box<punct>(c)));
     }
   }
   else if (c == '.') {
@@ -113,7 +115,7 @@ void Tokenizer::_put_string(char c) {
       _escape = true;
     } else if (c == '"') {
       _curr.val = Str(_text);
-      _push(_curr);
+      _enq(_curr);
       _text = "";
       _mode = normal;
     } else {
@@ -139,18 +141,112 @@ void Tokenizer::put(char c) {
 
 // Scanner /////////////////////////////////////////////////
 
+void SeqScanner::put(Token& t) {
+  if (_indents.empty()) {
+    _inilin = t.lin;
+    _inicol = t.col;
+  }
+  _indents.push_back(t.col);
+  _acum->push_back(t.val); 
+}
+
+Token SeqScanner::collect() {
+  return Token(_inilin, _inicol, _collect());
+}
+
+void ListScanner::_collect_tuple() {
+  if (_acum->empty()) {
+    _list->push_back(Nil);
+  } 
+  else if (_acum->size() == 1) {
+    _list->push_back(_acum[0]);
+  } 
+  else {
+    _list->push_back(_acum);
+  }
+  _acum = Tuple();
+}
+
+Any ListScanner::_collect() {
+  if (!_acum->empty()) _collect_tuple();
+  return _list;
+}
+
+Scanner::Scanner() {
+  _init();
+}
+
+void Scanner::_init() {
+  _stack.push_front(new ListScanner(';', '.'));
+}
+
+void Scanner::_pop() {
+  Token t = _stack.front()->collect();
+  delete _stack.front();
+  _stack.pop_front();
+  if (_stack.empty()) {
+    _enq(t.val);
+  } else {
+    _stack.front()->put(t);
+  }
+}
+
+void Scanner::_pop_all() {
+  while (!_stack.empty()) _pop();
+  _init();
+}
+
+void Scanner::_put(Token& t) {
+  if (t.val.is<punct>()) {
+    punct p = *t.val.as<punct>();
+    if (p.text == "\n\n" && busy()) {
+      _pop_all();
+    } else {
+      const char c = p.text[0];
+      switch (c) {
+      case '(': {
+	_push(new TupleScanner(')')); 
+	break;
+      }
+      case ':': {
+	_push(new ListScanner(';', '.')); 
+	break;
+      }
+      case ';': {
+	if (!_stack.front()->is_sep(c))
+	  throw ScanError("Unexpected separator");
+	_stack.front()->put_sep();
+	break;
+      }
+      case ')': 
+      case '.': {
+	while (!_stack.front()->is_end(c)) {
+	  _pop();
+	  if (_stack.empty()) {
+	    throw ScanError("unexpected close");
+	  }
+	}
+	_pop();
+	if (_stack.empty()) _init();
+	break;
+      }
+      }
+    }
+  } else {
+    _stack.front()->put(t);
+  }
+}
+
+void Scanner::put(char c) {
+  _T.put(c);
+  Token t;
+  while (_T.get(t)) _put(t);
+}
+
+
 void Scanner::putline(str s) {
   for (size_t k = 0; k < s.size(); k++) put(s[k]);
   put('\n');
-}
-
-bool Scanner::get(Any& a) {
-  Token t;
-  if (_T.get(t)) {
-    a = t.val;
-    return true;
-  }
-  return false;
 }
 
 } // namespace
