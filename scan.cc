@@ -26,7 +26,7 @@ ostream& operator<<(ostream& o, const punct& s) {
   return o;
 }
 
-const string seps = ":;()";
+const string seps = ":;(){}";
 inline bool issep(char c) {
   return seps.find(c) != str::npos;
 }
@@ -77,6 +77,7 @@ void Tokenizer::_put_normal(char c) {
     }
   }
   else if (c == '.') {
+    if (_dot) _collect();
     _dot = true;
   }
   else if (c == '"') {
@@ -209,7 +210,11 @@ void Scanner::_put(Token& t) {
 	break;
       }
       case ':': {
-	_push(new ListScanner(';', '.')); 
+	_push(new ListScanner(';', '.'));
+	break;
+      }
+      case '{': {
+	_push(new ListScanner(';', '}'));
 	break;
       }
       case ';': {
