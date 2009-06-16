@@ -28,7 +28,7 @@ clean:
 	@rm -f $(OBJ) mecano
 	@echo "ok"
 
-test:
+test: mecano
 	@test/test-mc.sh test/*.mc
 
 todo:
