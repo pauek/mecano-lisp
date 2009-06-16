@@ -11,3 +11,6 @@
       d
       e f g'.     
 # {(quote {(a b {c; d; (e f g)})})}
+
+`a `b' c'.     # {(quote {(a (quote {b}) c)})}
+`a `b; c' d'.  # {(quote {(a (quote {b; c}) d)})}
