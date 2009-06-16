@@ -28,11 +28,12 @@ void Tokenizer::_collect() {
 	_curr.val = Sym(_text);
       }
     }
+    _curr.pos.fin = _pos - 1;
     _enq(_curr);
     _text = "";
   }
   if (_dot) {
-    _enq(Token(_lin, _col-1, Box<char>('.'))); 
+    _enq(Token(Range(_pos), Box<char>('.'))); 
     _dot = false;
   }
 }
@@ -40,7 +41,7 @@ void Tokenizer::_collect() {
 void Tokenizer::_put_normal(char c) {
   if (c == '\n') {
     if (_endl && !_2endls) {
-      _enq(Token(_lin, _col, Box<char>('\n')));
+      _enq(Token(Range(_pos), Box<char>('\n')));
       _2endls = true;
     }
     _endl = true;
@@ -52,7 +53,7 @@ void Tokenizer::_put_normal(char c) {
   if (isspace(c) || bsep) {
     _collect();
     if (bsep) {
-      _enq(Token(_lin, _col, Box<char>(c)));
+      _enq(Token(Range(_pos), Box<char>(c)));
     }
   }
   else if (c == '.') {
@@ -62,8 +63,7 @@ void Tokenizer::_put_normal(char c) {
   else if (c == '"') {
     _collect();
     _mode = string;
-    _curr.lin = _lin;
-    _curr.col = _col;
+    _curr.pos.ini = _pos;
     _escape = false;
   }
   else if (c == '#') {
@@ -75,10 +75,7 @@ void Tokenizer::_put_normal(char c) {
       _text += '.';
       _dot = false;
     }
-    if (_text.empty()) {
-      _curr.lin = _lin;
-      _curr.col = _col;
-    }
+    if (_text.empty()) _curr.pos.ini = _pos;
     _text += c;
   }
 }
@@ -95,6 +92,7 @@ void Tokenizer::_put_string(char c) {
       _escape = true;
     } else if (c == '"') {
       _curr.val = Str(_text);
+      _curr.pos.fin = _pos;
       _enq(_curr);
       _text = "";
       _mode = normal;
@@ -105,8 +103,8 @@ void Tokenizer::_put_string(char c) {
 }
 
 void Tokenizer::put(char c) {
-  if (_endl) ++_lin, _col = 0;
-  else ++_col;
+  if (_endl) ++_pos.lin, _pos.col = 0;
+  else ++_pos.col;
 
   switch (_mode) {
   case normal: _put_normal(c); break;
@@ -122,46 +120,51 @@ void Tokenizer::put(char c) {
 // Scanner /////////////////////////////////////////////////
 
 void SeqScanner::put(Token& t) {
-  if (_indents.empty()) {
-    _inilin = t.lin;
-    _inicol = t.col;
-  }
-  _indents.push_back(t.col);
-  _acum->push_back(t.val); 
+  indents.push_back(t.pos);
+  acum->push_back(t.val); 
 }
 
-Token SeqScanner::collect() {
-  return Token(_inilin, _inicol, _collect());
+bool SeqScanner::has_indent(Pos p) const {
+  vector<Range>::const_reverse_iterator i;
+  i = indents.rbegin();
+  for (; i != indents.rend(); i++) {
+    if (i->ini.col == p.col) return true;
+  }
+  return false;
+}
+
+Token SeqScanner::collect(Pos fin) {
+  return Token(Range(ini, fin), _collect());
 }
 
 void ListScanner::_collect_tuple() {
-  if (_acum->empty()) {
+  if (acum->empty()) {
     _list->push_back(Nil);
   } 
-  else if (_acum->size() == 1) {
-    _list->push_back(_acum[0]);
+  else if (acum->size() == 1) {
+    _list->push_back(acum[0]);
   } 
   else {
-    _list->push_back(_acum);
+    _list->push_back(acum);
   }
-  _acum = Tuple();
+  acum = Tuple();
 }
 
 Any ListScanner::_collect() {
-  if (!_acum->empty()) _collect_tuple();
+  if (!acum->empty()) _collect_tuple();
   return _list;
 }
 
 Scanner::Scanner() {
-  _init();
+  _init(0);
 }
 
-void Scanner::_init() {
-  _stack.push_front(new ListScanner(';', '.'));
+void Scanner::_init(int lin) {
+  _stack.push_front(new ListScanner(';', '.', Pos(lin, 0)));
 }
 
 void Scanner::_pop() {
-  Token t = _stack.front()->collect();
+  Token t = _stack.front()->collect(_tok.pos.ini);
   delete _stack.front();
   _stack.pop_front();
   if (_stack.empty()) {
@@ -173,7 +176,6 @@ void Scanner::_pop() {
 
 void Scanner::_pop_all() {
   while (!_stack.empty()) _pop();
-  _init();
 }
 
 void Scanner::_pop_until(char end) {
@@ -184,40 +186,66 @@ void Scanner::_pop_until(char end) {
     }
   }
   _pop();
-  if (_stack.empty()) _init();
 }
 
-void Scanner::_put(Token& t) {
-  if (t.val.is<char>()) {
-    char c = *t.val.as<char>();
+void Scanner::_maybe_break(Pos p) {
+  if (_stack.front()->is_lower(p)) {
+    bool has_it = _stack.front()->has_indent(p);
+    while (!has_it) {
+      if (!_stack.front()->can_break) {
+	throw ScanError("Unexpected indentation");
+      }
+      _pop();
+      if (_stack.empty()) {
+	throw ScanError("Unexpected indentation");
+      }
+      has_it = _stack.front()->has_indent(p);
+    }
+    if (_stack.front()->is_initial(p) && 
+	_stack.front()->can_break) {
+      _stack.front()->put_break();
+    }
+  }
+}
+
+void Scanner::_put() {
+  if (_tok.val.is<char>()) {
+    char c = *_tok.val.as<char>();
     if (c == '\n' && busy()) {
       _pop_all();
+      _init(_tok.pos.fin.lin);
     } else {
       switch (c) {
-      case '(': _push(new TupleScanner(')'));     break;
-      case ':': _push(new ListScanner(';', '.')); break;
-      case '{': _push(new ListScanner(';', '}')); break;
-
-      case ';': {
-	if (!_stack.front()->is_sep(c))
-	  throw ScanError("Unexpected separator");
-	_stack.front()->put_sep();
+      case '(': 
+	_maybe_break(_tok.pos.ini);
+	_push(new TupleScanner(')', _tok.pos.ini));     
+	break;
+      case ':': 
+	_maybe_break(_tok.pos.ini);
+	_push(new ListScanner(';', '.', _tok.pos.ini)); 
+	break;
+      case '{':
+	_maybe_break(_tok.pos.ini);
+	_push(new ListScanner(';', '}', _tok.pos.ini)); 
+	break;
+      case ';': _stack.front()->put_sep(c); break;
+      case ')': 
+      case '.': {
+	_pop_until(c); 
+	if (_stack.empty()) _init(_tok.pos.fin.lin);
 	break;
       }
-
-      case ')': 
-      case '.': _pop_until(c); break;
       }
     }
   } else {
-    _stack.front()->put(t);
+    _maybe_break(_tok.pos.ini);
+    _stack.front()->put(_tok);
   }
 }
 
 void Scanner::put(char c) {
   _T.put(c);
-  Token t;
-  while (_T.get(t)) _put(t);
+  while (_T.get(_tok)) _put();
 }
 
 

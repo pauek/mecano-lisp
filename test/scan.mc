@@ -25,12 +25,13 @@ a:
 
 a: b c d
    e f g
-# {(a, {(b, c, d); (e, f, g)})}
+
+# {(a {(b c d); (e f g)})}
 
 a: 
   b c d
   e f g
-# {(a, {(b, c, d); (e, f, g)})}
+# {(a {(b c d); (e f g)})}
 
 x y
   z.
@@ -44,9 +45,17 @@ x y
    e)
 # {(a c e)}
 
+(a b
+ c d)
+# {(a b c d)}
+
+(a
+ b)
+# {(a b)}
+
 (a b c
      d)
-# {(a, b, c, d)}
+# {(a b c d)}
 
 (a b
    c d
@@ -58,16 +67,16 @@ for (i 1 10):
   print j
 # {(for (i 1 10) {(print i); (print j)})}
 
-if (i > 7): print "i > 7".
-   (i < 1): print "i < 1".
-   else: print "hohoho".
-# {(if (i > 7) {(print "i > 7")} (i < 1) {(print "i < 1")} else {(print "hohoho")})}
-
 a b:
     c
   d:
     e
 # {(a b {c} d {e})}
+
+if (i > 7): print "i > 7".
+   (i < 1): print "i < 1".
+   else: print "hohoho".
+# {(if (i > 7) {(print "i > 7")} (i < 1) {(print "i < 1")} else {(print "hohoho")})}
 
 if (i > 2):
      print "i > 2"
