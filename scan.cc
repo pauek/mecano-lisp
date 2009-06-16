@@ -37,7 +37,6 @@ void Tokenizer::_collect() {
   }
 }
 
-
 void Tokenizer::_put_normal(char c) {
   if (c == '\n') {
     if (_endl && !_2endls) {
