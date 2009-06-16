@@ -6,6 +6,8 @@ using namespace std;
 
 namespace mc {
 
+// separator ///////////////////////////////////////////////
+
 struct sep {
   str text;
   operator str() { return text; }
@@ -26,6 +28,8 @@ const string seps = ":;()";
 inline bool issep(char c) {
   return seps.find(c) != str::npos;
 }
+
+// Tokenizer ///////////////////////////////////////////////
 
 void Tokenizer::_collect() {
   if (!_text.empty()) {
@@ -132,6 +136,8 @@ void Tokenizer::put(char c) {
     }
   }
 }
+
+// Scanner /////////////////////////////////////////////////
 
 void Scanner::putline(str s) {
   for (size_t k = 0; k < s.size(); k++) put(s[k]);
