@@ -17,13 +17,13 @@ void Tokenizer::_collect() {
   if (!_text.empty()) {
     const char *begin = _text.c_str();
     char *end;
-    double d = strtod(begin, &end);
-    if (end != begin) {
-      _curr.val = Real(d);
-    } else {
-      long int i = strtold(begin, &end);
-      if (end != begin) {
-	_curr.val = Int(i);
+    long int i = strtold(begin, &end);
+    if (size_t(end - begin) == _text.size()) {
+      _curr.val = Int(i);
+    } else{
+      double d = strtod(begin, &end);
+      if (size_t(end - begin) == _text.size()) {
+	_curr.val = Real(d);
       } else {
 	_curr.val = Sym(_text);
       }
