@@ -76,7 +76,8 @@ class Tokenizer : public Queue<Token> {
 
 public:
   Tokenizer() 
-    : _pos(-1, -1), _mode(normal), _endl(true) {}
+    : _pos(-1, -1), _mode(normal), 
+      _endl(true), _2endls(false), _dot(false) {}
 
   Pos  pos() const { return _pos; }
   void put(char c);
@@ -93,9 +94,10 @@ struct SeqScanner {
   Tuple acum;
   char  end;
   bool  can_break;
+  int   unquote;
   
   SeqScanner(char c, Pos p) 
-    : ini(p), end(c), can_break(false) {}
+    : ini(p), end(c), can_break(false), unquote(0) {}
   
   bool  busy() const { return !acum->empty(); }
   bool  has_indent(Pos p) const;

@@ -56,6 +56,10 @@ void Tokenizer::_put_normal(char c) {
       _enq(Token(Range(_pos), Box<char>(c)));
     }
   }
+  else if (c == '@') {
+    _collect();
+    _enq(Token(Range(_pos), Box<char>('@')));
+  }
   else if (c == '.') {
     if (_dot) _collect();
     _dot = true;
@@ -121,7 +125,12 @@ void Tokenizer::put(char c) {
 
 void SeqScanner::put(Token& t) {
   indents.push_back(t.pos);
-  acum->push_back(t.val); 
+  Any v = t.val;
+  while (unquote > 0) {
+    v = Tuple(Sym("unquote"), v);
+    unquote--;
+  }
+  acum->push_back(v); 
 }
 
 bool SeqScanner::has_indent(Pos p) const {
@@ -221,6 +230,8 @@ void Scanner::_put() {
     if (c == '\n' && busy()) {
       _pop_all();
       _init(_tok.pos.fin.lin);
+    } else if (c == '@') {
+      _stack.front()->unquote++;
     } else {
       switch (c) {
       case '(': 
