@@ -13,6 +13,19 @@ namespace mc {
 typedef std::vector<Any> Vec;
 typedef Any (*TransFn)(Vec& v);
 
+struct SeqScanner {
+  virtual void put(Any a, int col) = 0;
+  
+};
+
+class ListScanner : public SeqScanner {
+  
+};
+
+class TupleScanner : public SeqScanner {
+  
+};
+
 class SeqScanner {
   typedef std::vector<TransFn> Trans;
   typedef std::vector<Vec> Acum;
@@ -20,7 +33,6 @@ class SeqScanner {
   Trans _trans;
   int   _lev, _inicol;
   Acum  _acum;
-  Vec   _in;
   bool  _breakable;
 
   void _pop(int lev);

@@ -53,10 +53,19 @@ Any _scan_atom(str s) {
 // In TransFn's the vector 'v' has to be cleared.
 
 template<typename Seq>
-Any id(Vec& v) {
+Any normal(Vec& v) {
   Seq s;
   s->swap(v);
   return s;
+}
+
+template<typename Seq>
+Any make(Vec& v) {
+  if (v.size() == 1) {
+    return v[0];
+  } else {
+    return normal<Seq>(v);
+  }
 }
 
 template<TransFn f>
@@ -70,31 +79,8 @@ Any rmv_singles(Vec& v) {
   return res;
 }
 
-template<typename Seq>
-Any make(Vec& v) {
-  Any a = rmv_singles< id<Seq> >(v);
-  Seq t = Seq::from(a);
-  return (t.not_null() ? t : Seq(v[0]));
-}
-
-Any make_quote(Vec& v) {
-  Any a = rmv_singles< id<List> >(v);
-  return Tuple(Sym("quote"), a);
-}
-
-Any literal(Vec& v, string name) {
-  Tuple t;
-  t->push_back(Sym(name));
-  t->append(v);
-  v.clear();
-  return t;
-}
-
-Any list_literal(Vec& v)  { return literal(v, "list"); }
-Any tuple_literal(Vec& v) { return literal(v, "tuple"); }
-
-Any normal(Vec& v) {
-  return rmv_singles< id<Tuple> >(v);
+Any by_default(Vec& v) {
+  return rmv_singles< normal<Tuple> >(v);
 }
 
 // SeqScanner //////////////////////////////////////////////
@@ -113,9 +99,6 @@ void SeqScanner::_pop(int lev) {
 }
 
 bool SeqScanner::collect(Any& a) {
-  if (!_in.empty()) {
-    _acum[_lev].push_back(normal(_in));
-  } 
   while (_lev > 0) _pop(_lev--);
   _inicol = -1;
   if (_acum[0].empty()) { 
@@ -127,7 +110,7 @@ bool SeqScanner::collect(Any& a) {
 }
 
 void SeqScanner::put(Any a, int col) {
-  _in.push_back(a); 
+  _acum[_lev].push_back(a);
   if (_inicol == -1) {
     _inicol = col;
   }
@@ -137,10 +120,10 @@ void SeqScanner::put_sep(char c) {
   int newlev = _seps.find(c);
   assert(newlev >= 0 && newlev < int(_seps.size()));
   if (newlev >= _lev) {
-    _acum[newlev].push_back(normal(_in));
+    _acum[newlev].push_back(by_default(_acum[newlev]));
     _lev = newlev;
   } else {
-    _acum[_lev].push_back(normal(_in));
+    _acum[_lev].push_back(by_default(_in));
     while (_lev > newlev) _pop(_lev--);
   }
 }
@@ -151,19 +134,9 @@ void SeqScanner::put_break() {
 
 class BlockScanner : public SeqScanner {
 public:
-  BlockScanner() : SeqScanner(true) {
-    add_level('.', make<List>);
-    add_level(';', rmv_singles< id<List> >);
-    add_level(',', rmv_singles<tuple_literal>);
-  }
-};
-
-class ListScanner : public SeqScanner {
-public:
-  ListScanner() : SeqScanner() {
-    add_level('}', make<List>);
-    add_level(';', list_literal);
-    add_level(',', rmv_singles<tuple_literal>);
+  BlockScanner(char c) : SeqScanner(true) {
+    add_level(c,   normal<List>);
+    add_level(';', make<List>);
   }
 };
 
@@ -171,16 +144,6 @@ class TupleScanner : public SeqScanner {
 public:
   TupleScanner() : SeqScanner() {
     add_level(')', make<Tuple>);
-    add_level(',', rmv_singles<tuple_literal>);
-  }
-};
-
-class QuoteScanner : public SeqScanner {
-public:
-  QuoteScanner() : SeqScanner(true) {
-    add_level('\'', make_quote);
-    add_level(';', rmv_singles< id<List> >);
-    add_level(',', rmv_singles<tuple_literal>);
   }
 };
 
@@ -198,7 +161,7 @@ void Scanner::_reset() {
 }
 
 Scanner::Scanner () {
-  _stack.push_back(new BlockScanner());
+  _stack.push_back(new BlockScanner('.'));
   _reset();
 }
 
@@ -279,10 +242,10 @@ void Scanner::_put_sep(char c) {
   if (_is_sep(open, c)) {
     SeqScanner *ps;
     switch (c) {
-    case ':': ps = new BlockScanner(); break;
+    case ':': ps = new BlockScanner('.'); break;
     case '(': ps = new TupleScanner(); break;
-    case '{': ps = new ListScanner(); break;
-    case '`': ps = new QuoteScanner(); break;
+    case '{': ps = new BlockScanner('}'); break;
+    case '`': ps = new BlockScanner('\''); break;
     }
     _stack.push_front(ps);
   }
