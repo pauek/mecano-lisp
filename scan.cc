@@ -184,24 +184,17 @@ void Scanner::_put(Token& t) {
       _pop_all();
     } else {
       switch (c) {
-      case '(': {
-	_push(new TupleScanner(')')); 
-	break;
-      }
-      case ':': {
-	_push(new ListScanner(';', '.'));
-	break;
-      }
-      case '{': {
-	_push(new ListScanner(';', '}'));
-	break;
-      }
+      case '(': _push(new TupleScanner(')'));     break;
+      case ':': _push(new ListScanner(';', '.')); break;
+      case '{': _push(new ListScanner(';', '}')); break;
+
       case ';': {
 	if (!_stack.front()->is_sep(c))
 	  throw ScanError("Unexpected separator");
 	_stack.front()->put_sep();
 	break;
       }
+
       case ')': 
       case '.': {
 	while (!_stack.front()->is_end(c)) {
