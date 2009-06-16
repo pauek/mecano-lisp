@@ -159,7 +159,7 @@ class Scanner : public Queue<Any> {
 public:
   Scanner();
   void put(char c);
-  void putline(str s);
+  void putline(const str& s);
 
   bool busy() const { 
     return _stack.front()->busy() || _T.busy(); 

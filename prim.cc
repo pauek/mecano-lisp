@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include "core.hh"
 #include "prim.hh"
+#include "scan.hh"
 
 namespace mc {
 
@@ -40,6 +41,22 @@ void callcc(VM& vm, Tuple args) {
     throw TypeError("call/cc: need exactly one argument");
   }
   vm.val = Call(Tuple(args[1], Func(new savecc(vm.cont))));
+}
+
+Any scan(Any a) {
+  Str s = a;
+  if (s.is_null()) 
+    throw TypeError("scan: argument must be string");
+
+  Scanner S;
+  S.putline(*s);
+  S.put('\n');
+  List l;
+  while (S.get(a)) {
+    List ll = List::from(a);
+    l->append(*ll);
+  }
+  return l;
 }
 
 Any len(Any a) {

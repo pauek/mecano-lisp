@@ -212,6 +212,7 @@ struct _str {
   _str(const char *_s) : s(_s) {}
   bool operator==(_str str) const { return s == str.s; }
   bool operator<(_str str)  const { return s < str.s; }
+  operator str() const { return s; }
 };
 
 inline std::ostream& 

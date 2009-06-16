@@ -249,7 +249,7 @@ void Scanner::put(char c) {
 }
 
 
-void Scanner::putline(str s) {
+void Scanner::putline(const str& s) {
   for (size_t k = 0; k < s.size(); k++) put(s[k]);
   put('\n');
 }
