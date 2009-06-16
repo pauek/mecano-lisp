@@ -176,6 +176,17 @@ void Scanner::_pop_all() {
   _init();
 }
 
+void Scanner::_pop_until(char end) {
+  while (!_stack.front()->is_end(end)) {
+    _pop();
+    if (_stack.empty()) {
+      throw ScanError("unexpected close");
+    }
+  }
+  _pop();
+  if (_stack.empty()) _init();
+}
+
 void Scanner::_put(Token& t) {
   if (t.val.is<char>()) {
     char c = *t.val.as<char>();
@@ -195,17 +206,7 @@ void Scanner::_put(Token& t) {
       }
 
       case ')': 
-      case '.': {
-	while (!_stack.front()->is_end(c)) {
-	  _pop();
-	  if (_stack.empty()) {
-	    throw ScanError("unexpected close");
-	  }
-	}
-	_pop();
-	if (_stack.empty()) _init();
-	break;
-      }
+      case '.': _pop_until(c); break;
       }
     }
   } else {

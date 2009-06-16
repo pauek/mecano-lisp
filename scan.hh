@@ -119,6 +119,7 @@ class Scanner : public Queue<Any> {
   void _put(Token& t);
   void _init();
   void _pop();
+  void _pop_until(char end);
   void _pop_all();
 
 public:
