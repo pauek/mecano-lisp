@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <list>
 #include <map>
@@ -29,6 +30,7 @@ struct error : public Error {
 typedef error<1> NullPointer;
 typedef error<2> TypeError;
 typedef error<3> ScanError;
+typedef error<4> NameError;
 
 // Boxing //////////////////////////////////////////////////
 
@@ -335,7 +337,7 @@ public:
   int  size() const { return _locals->size(); }
   Any  operator[](int n) const { return _locals[n]; }
   Any& operator[](int n) { return _locals[n]; }
-  Any  lookup(sym s) const;
+  bool lookup(sym s, Any& a) const;
   void bind(sym s, Any v);
 };
 
@@ -619,7 +621,13 @@ EVAL_BASIC(Real, double)
 EVAL_BASIC(Func, func)
 
 inline void eval(VM& vm, const sym& s) {
-  vm.yield(vm.env->lookup(s));
+  Any a;
+  if (!vm.env->lookup(s, a)) {
+    std::stringstream out;
+    out << "symbol `" << s << "' not found.";
+    throw NameError(out.str());
+  }
+  vm.yield(a);
 }
 
 template<typename seq>

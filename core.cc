@@ -96,12 +96,14 @@ Env *Env::extend(Any params, Tuple locals) {
   return E;
 }
 
-Any Env::lookup(sym s) const {
+bool Env::lookup(sym s, Any& a) const {
   map<int, int>::const_iterator i = _transl.find(s.id());
   if (i != _transl.end()) {
-    return _locals[i->second];
+    a = _locals[i->second];
+    return true;
   } else {
-    return (_upper ? _upper->lookup(s) : Nil);
+    if (!_upper) return false;
+    else return _upper->lookup(s, a);
   }
 }
 
@@ -166,6 +168,7 @@ bool VM::step() {
   catch (Error& e) {
     cerr << "Error: " << e.msg << endl;
     val = Nil;
+    cont = NULL;
     return false;
   }
 }
