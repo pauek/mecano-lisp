@@ -31,7 +31,7 @@ ostream& operator<<(ostream& o, const tup& t) {
   o << "(";
   tup::const_iterator i = t.begin();
   if (i != t.end()) o << *i++;
-  while (i != t.end()) o << ", " << *i++;
+  while (i != t.end()) o << " " << *i++;
   return o << ")";
 }
 
