@@ -6,26 +6,6 @@ using namespace std;
 
 namespace mc {
 
-// separator ///////////////////////////////////////////////
-
-struct punct {
-  str text;
-  operator str() { return text; }
-  punct(char c) { text += c; }
-  punct(const char* t) : text(t) {}
-  bool operator==(const punct& s) const { 
-    return text == s.text;
-  }
-};
-
-EVAL_BASIC(Box<punct>, punct);
-
-ostream& operator<<(ostream& o, const punct& s) { 
-  if (s.text == "\n\n") o << "<double endl>";
-  else o << '\'' << s.text << '\'';
-  return o;
-}
-
 const string seps = ":;(){}";
 inline bool issep(char c) {
   return seps.find(c) != str::npos;
@@ -52,7 +32,7 @@ void Tokenizer::_collect() {
     _text = "";
   }
   if (_dot) {
-    _enq(Token(_lin, _col-1, Box<punct>('.'))); 
+    _enq(Token(_lin, _col-1, Box<char>('.'))); 
     _dot = false;
   }
 }
@@ -61,7 +41,7 @@ void Tokenizer::_collect() {
 void Tokenizer::_put_normal(char c) {
   if (c == '\n') {
     if (_endl && !_2endls) {
-      _enq(Token(_lin, _col, Box<punct>("\n\n")));
+      _enq(Token(_lin, _col, Box<char>('\n')));
       _2endls = true;
     }
     _endl = true;
@@ -73,7 +53,7 @@ void Tokenizer::_put_normal(char c) {
   if (isspace(c) || bsep) {
     _collect();
     if (bsep) {
-      _enq(Token(_lin, _col, Box<punct>(c)));
+      _enq(Token(_lin, _col, Box<char>(c)));
     }
   }
   else if (c == '.') {
@@ -198,12 +178,11 @@ void Scanner::_pop_all() {
 }
 
 void Scanner::_put(Token& t) {
-  if (t.val.is<punct>()) {
-    punct p = *t.val.as<punct>();
-    if (p.text == "\n\n" && busy()) {
+  if (t.val.is<char>()) {
+    char c = *t.val.as<char>();
+    if (c == '\n' && busy()) {
       _pop_all();
     } else {
-      const char c = p.text[0];
       switch (c) {
       case '(': {
 	_push(new TupleScanner(')')); 
