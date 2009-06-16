@@ -6,7 +6,7 @@ using namespace std;
 
 namespace mc {
 
-const string seps = ":;(){}";
+const string seps = ":;(){}`'"; // '.' has special treatment
 inline bool issep(char c) {
   return seps.find(c) != str::npos;
 }
@@ -155,6 +155,13 @@ Any ListScanner::_collect() {
   return _list;
 }
 
+Any QuoteScanner::_collect() {
+  return Tuple(Sym("quote"), 
+	       ListScanner::_collect());
+}
+
+// Scanner /////////////////////////////////////////////////
+
 Scanner::Scanner() {
   _init(0);
 }
@@ -228,8 +235,13 @@ void Scanner::_put() {
 	_maybe_break(_tok.pos.ini);
 	_push(new ListScanner(';', '}', _tok.pos.ini)); 
 	break;
+      case '`':
+	_maybe_break(_tok.pos.ini);
+	_push(new QuoteScanner(';', '\'', _tok.pos.ini)); 
+	break;
       case ';': _stack.front()->put_sep(c); break;
       case ')': 
+      case '\'':
       case '.': {
 	_pop_until(c); 
 	if (_stack.empty()) _init(_tok.pos.fin.lin);

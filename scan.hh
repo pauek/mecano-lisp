@@ -140,6 +140,13 @@ public:
   Any  _collect();
 };
 
+struct QuoteScanner : public ListScanner {
+public:
+  QuoteScanner(char sep, char end, Pos pos)
+    : ListScanner(sep, end, pos) {}
+  Any _collect();
+};
+
 class Scanner : public Queue<Any> {
   Tokenizer _T;
   Token _tok;
