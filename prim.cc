@@ -43,6 +43,14 @@ void callcc(VM& vm, Tuple args) {
   vm.val = Call(Tuple(args[1], Func(new savecc(vm.cont))));
 }
 
+Any mksym(Any a) {
+  Str s = a;
+  if (s.is_null()) 
+    throw TypeError("argument must be a string");
+
+  return Sym(*s);
+}
+
 Any scan(Any a) {
   Str s = a;
   if (s.is_null()) 

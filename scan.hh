@@ -176,7 +176,8 @@ public:
 };
 
 // Parse
-Any parse(Any in);
+Any  parse(Any in);
+void parse2(VM& vm, Tuple args);
 
 } // namespace
 

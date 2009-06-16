@@ -86,6 +86,7 @@ void Tokenizer::_put_normal(char c) {
 
 void Tokenizer::_put_string(char c) {
   if (_escape) {
+    _escape = false;
     switch (c) {
     case 'n':  _text += '\n'; break;
     case '\\': _text += '\\'; break;

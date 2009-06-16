@@ -31,6 +31,7 @@ typedef error<1> NullPointer;
 typedef error<2> TypeError;
 typedef error<3> ScanError;
 typedef error<4> NameError;
+typedef error<4> ParseError;
 
 // Boxing //////////////////////////////////////////////////
 
