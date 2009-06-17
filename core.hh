@@ -275,6 +275,7 @@ struct seq : public std::vector<Any> {
     }
   }
 };
+
 struct tup : seq {};
 struct lst : seq {};
 
@@ -620,58 +621,30 @@ EVAL_BASIC(Str,  _str)
 EVAL_BASIC(Real, double)
 EVAL_BASIC(Func, func)
 
-inline void eval(VM& vm, const sym& s) {
-  if (vm.lquote > 0) {
-    vm.yield(Sym(s));
-  } else if (s.name() == "nil") {
-    vm.yield(Nil);
-  } else if (s.name() == "true") {
-    vm.yield(True);
-  } else if (s.name() == "false") {
-    vm.yield(False);
-  } else {
-    Any a;
-    if (!vm.env->lookup(s, a)) {
-      std::stringstream out;
-      out << "symbol `" << s << "' not found.";
-      throw NameError(out.str());
-    }
-    vm.yield(a);
-  }
-}
+void eval(VM& vm, const sym& s);
+void eval(VM& vm, const tup& s);
+void eval(VM& vm, const lst& l);
 
 template<typename seq>
 struct seqCont : public Continuation {
-  const seq& l;
+  seq l;
   unsigned int k;
-  seqCont(const seq& _l) : l(_l), k(0) {}
+  bool last;
+  seqCont(const seq& _l, bool yield_last = false) 
+    : l(_l), k(0), last(yield_last) {}
+
   void call(VM& vm, Any a) {
+    l[k] = a;
     if (++k < l.size()) {
       vm.val = l[k];
     } else {
       vm.pop();
-      vm.yield(a);
+      if (last) vm.yield(a);
+      else vm.yield(Box<seq>(l));
     }
   }
 };
 
-typedef seqCont<lst> lstCont;
-
-struct tupCont : public seqCont<tup> {
-  Tuple result;
-  tupCont(const tup& t) : seqCont<tup>(t) {}
-  void call(VM& vm, Any a) {
-    result->push_back(a);
-    seqCont<tup>::call(vm, result);
-  }
-};
-
-void eval(VM& vm, const tup& t);
-
-inline void eval(VM& vm, const lst& l) {
-  vm.push(new lstCont(l));
-  vm.val = l[0];
-}
 
 // Here because VM is needed
 

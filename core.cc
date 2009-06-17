@@ -146,6 +146,31 @@ struct Invoke : public Continuation {
   }
 };
 
+void eval(VM& vm, const sym& s) {
+  if (vm.lquote > 0) {
+    vm.yield(Sym(s));
+  } else if (s.name() == "nil") {
+    vm.yield(Nil);
+  } else if (s.name() == "true") {
+    vm.yield(True);
+  } else if (s.name() == "false") {
+    vm.yield(False);
+  } else {
+    Any a;
+    if (!vm.env->lookup(s, a)) {
+      std::stringstream out;
+      out << "symbol `" << s << "' not found.";
+      throw NameError(out.str());
+    }
+    vm.yield(a);
+  }
+}
+
+void eval(VM& vm, const lst& l) {
+  vm.push(new seqCont<lst>(l, vm.lquote == 0));
+  vm.val = l[0];
+}
+
 void eval(VM& vm, const tup& t) {
   if (t.size() == 0) {
     vm.yield(Nil);
@@ -171,7 +196,7 @@ void eval(VM& vm, const tup& t) {
   } 
   else {
     if (vm.lquote > 0) {
-      vm.push(new tupCont(t));
+      vm.push(new seqCont<tup>(t));
       vm.val = t[0];
       return;
     }
@@ -197,7 +222,7 @@ void eval(VM& vm, const tup& t) {
     } 
     else {
       vm.push(new Invoke);
-      vm.push(new tupCont(t));
+      vm.push(new seqCont<tup>(t));
       vm.val = t[0];
     }
   }
@@ -218,12 +243,13 @@ void VM::init() {
   env->bind(sym("quit"),    Prim(quit));
   env->bind(sym("apply"),   Prim(apply));
   env->bind(sym("eval"),    Prim(peval));
+  env->bind(sym("map"),     Prim(pmap));
   env->bind(sym("sym"),     Prim(direct< unary<mksym> >));
   env->bind(sym("call/cc"), Prim(callcc));
   env->bind(sym("scan"),    Prim(direct< unary<scan> >));
   env->bind(sym("list"),    Prim(direct< mkseq<List> >));
   env->bind(sym("tuple"),   Prim(direct< mkseq<Tuple> >));
-  env->bind(sym("+"),       Prim(direct<sum>));
+  env->bind(sym("+"),       Prim(direct< sum >));
   env->bind(sym("<"),       Prim(direct< pairwise<less> >));
   env->bind(sym("=="),      Prim(direct< pairwise<equal> >));
   env->bind(sym("1st"),     Prim(direct< unary< nth<1> > >));

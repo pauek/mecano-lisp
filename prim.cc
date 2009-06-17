@@ -3,6 +3,7 @@
 #include "core.hh"
 #include "prim.hh"
 #include "read.hh"
+using namespace std;
 
 namespace mc {
 
@@ -48,6 +49,49 @@ void callcc(VM& vm, Tuple args) {
     throw TypeError("call/cc: need exactly one argument");
   }
   vm.val = Call(Tuple(args[1], Func(new savecc(vm.cont))));
+}
+
+template<typename Seq>
+struct MapCont : public Continuation {
+  size_t k;
+  Func   fn;
+  Seq    result;
+  MapCont(Func f, Seq seq)
+    : k(0), fn(f), result(*seq) {}
+
+  void call(VM& vm, Any a) {
+    result[k] = a;
+    k++;
+    if (k < result->size()) {
+      vm.val = Call(Tuple(fn, result[k]));
+    } else {
+      vm.pop();
+      vm.yield(result);
+    }
+  }
+};
+
+void pmap(VM& vm, Tuple args) {
+  if (args->size() != 3) {
+    throw TypeError("map: need exactly two arguments");
+  }
+  Func f = args[1];
+  if (f.is_null()) {
+    throw TypeError("map: first argument must be a function");
+  }
+  Tuple t = Tuple::from(args[2]);
+  if (t.not_null()) {
+    vm.val = Call(Tuple(f, t[0]));
+    vm.push(new MapCont<Tuple>(f, t));
+    return;
+  }
+  List l = List::from(args[2]);
+  if (l.not_null()) {
+    vm.val = Call(Tuple(f, l[0]));
+    vm.push(new MapCont<List>(f, l));
+    return;
+  }
+  throw TypeError("map: second argument must be a sequence");
 }
 
 Any mksym(Any a) {
