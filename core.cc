@@ -142,7 +142,6 @@ struct Invoke : public Continuation {
     Tuple t = Tuple::from(a);
     assert(t.not_null());
     vm.pop();
-    cout << "invoke" << endl;
     vm.val = Call(t);
   }
 };
@@ -240,12 +239,16 @@ bool VM::step() {
     if (breturn) {
       breturn = false;
       if (!cont) return false;
+#ifdef LOG
       cout << "cont[" << lquote << "] " << val << endl;
+#endif
       cont->call(*this, val);
     }
     else {
       if (val.is_null()) return false;
+#ifdef LOG
       cout << "eval[" << lquote << "] " << val << endl;
+#endif
       val->eval(*this);
     }
     return true;
