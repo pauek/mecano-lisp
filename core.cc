@@ -218,6 +218,7 @@ void VM::reset() {
 void VM::init() {
   env->bind(sym("quit"),    Prim(quit));
   env->bind(sym("apply"),   Prim(apply));
+  env->bind(sym("eval"),    Prim(peval));
   env->bind(sym("sym"),     Prim(direct< unary<mksym> >));
   env->bind(sym("call/cc"), Prim(callcc));
   env->bind(sym("scan"),    Prim(direct< unary<scan> >));

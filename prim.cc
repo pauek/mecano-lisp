@@ -23,6 +23,13 @@ void apply(VM& vm, Tuple args) {
   eval(vm, call(form));
 }
 
+void peval(VM& vm, Tuple args) {
+  if (args->size() != 2) {
+    throw TypeError("eval: need exactly one argument");
+  }
+  vm.val = args[1];
+}
+
 struct savecc : public Executable {
   Continuation *saved;
   savecc(Continuation *s) : saved(s) {}

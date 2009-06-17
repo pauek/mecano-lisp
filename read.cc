@@ -272,7 +272,6 @@ void Reader::put(char c) {
   while (_T.get(_tok)) _put();
 }
 
-
 void Reader::putline(const str& s) {
   for (size_t k = 0; k < s.size(); k++) put(s[k]);
   put('\n');

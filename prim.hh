@@ -51,6 +51,7 @@ Any mkseq(Tuple args) {
 void quit(VM& vm, Tuple args);
 void callcc(VM& vm, Tuple args);
 void apply(VM& vm, Tuple args);
+void peval(VM& vm, Tuple args);
 Any  len(Any a);
 Any  mksym(Any a);
 Any  scan(Any a);

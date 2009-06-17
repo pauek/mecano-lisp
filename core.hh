@@ -623,6 +623,12 @@ EVAL_BASIC(Func, func)
 inline void eval(VM& vm, const sym& s) {
   if (vm.lquote > 0) {
     vm.yield(Sym(s));
+  } else if (s.name() == "nil") {
+    vm.yield(Nil);
+  } else if (s.name() == "true") {
+    vm.yield(True);
+  } else if (s.name() == "false") {
+    vm.yield(False);
   } else {
     Any a;
     if (!vm.env->lookup(s, a)) {
