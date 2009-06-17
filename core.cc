@@ -255,8 +255,7 @@ bool VM::step() {
   }
   catch (Error& e) {
     cerr << "Error: " << e.msg << endl;
-    val = Nil;
-    cont = NULL;
+    reset();
     return false;
   }
 }
