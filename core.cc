@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include "core.hh"
-#include "scan.hh"
+#include "read.hh"
 #include "prim.hh"
 using namespace std;
 

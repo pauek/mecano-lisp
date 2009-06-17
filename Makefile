@@ -8,7 +8,7 @@ else
 	CXXFLAGS += -g3 -fno-inline
 endif
 
-SRC = core.cc scan.cc prim.cc main.cc
+SRC = core.cc read.cc prim.cc main.cc
 OBJ = ${SRC:.cc=.o}
 
 all: mecano
@@ -18,7 +18,7 @@ mecano: $(OBJ)
 	@$(CXX) -o mecano $(OBJ) $(LDFLAGS) $(CXXFLAGS) -lgc -lstdc++
 
 $(OBJ): core.hh
-scan.o: scan.hh
+read.o: read.hh
 
 .cc.o:
 	@echo "[C]" $<

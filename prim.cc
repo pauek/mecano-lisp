@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include "core.hh"
 #include "prim.hh"
-#include "scan.hh"
+#include "read.hh"
 
 namespace mc {
 
@@ -56,11 +56,11 @@ Any scan(Any a) {
   if (s.is_null()) 
     throw TypeError("scan: argument must be string");
 
-  Scanner S;
-  S.putline(*s);
-  S.put('\n');
+  Reader R;
+  R.putline(*s);
+  R.put('\n');
   List l;
-  while (S.get(a)) {
+  while (R.get(a)) {
     List ll = List::from(a);
     l->append(*ll);
   }

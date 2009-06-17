@@ -1,7 +1,7 @@
 
 #include <cstdlib>
 #include "core.hh"
-#include "scan.hh"
+#include "read.hh"
 using namespace std;
 
 namespace mc {
@@ -122,9 +122,9 @@ void Tokenizer::put(char c) {
   }
 }
 
-// Scanner /////////////////////////////////////////////////
+// Reader /////////////////////////////////////////////////
 
-void SeqScanner::put(Token& t) {
+void SeqReader::put(Token& t) {
   indents.push_back(t.pos);
   Any v = t.val;
   while (unquote > 0) {
@@ -134,7 +134,7 @@ void SeqScanner::put(Token& t) {
   acum->push_back(v); 
 }
 
-bool SeqScanner::has_indent(Pos p) const {
+bool SeqReader::has_indent(Pos p) const {
   vector<Range>::const_reverse_iterator i;
   i = indents.rbegin();
   for (; i != indents.rend(); i++) {
@@ -143,11 +143,11 @@ bool SeqScanner::has_indent(Pos p) const {
   return false;
 }
 
-Token SeqScanner::collect(Pos fin) {
+Token SeqReader::collect(Pos fin) {
   return Token(Range(ini, fin), _collect());
 }
 
-void ListScanner::_collect_tuple() {
+void ListReader::_collect_tuple() {
   if (acum->empty()) {
     _list->push_back(Nil);
   } 
@@ -160,27 +160,27 @@ void ListScanner::_collect_tuple() {
   acum = Tuple();
 }
 
-Any ListScanner::_collect() {
+Any ListReader::_collect() {
   if (!acum->empty()) _collect_tuple();
   return _list;
 }
 
-Any QuoteScanner::_collect() {
+Any QuoteReader::_collect() {
   return Tuple(Sym("quote"), 
-	       ListScanner::_collect());
+	       ListReader::_collect());
 }
 
-// Scanner /////////////////////////////////////////////////
+// Reader /////////////////////////////////////////////////
 
-Scanner::Scanner() {
+Reader::Reader() {
   _init(0);
 }
 
-void Scanner::_init(int lin) {
-  _stack.push_front(new ListScanner(';', '.', Pos(lin, 0)));
+void Reader::_init(int lin) {
+  _stack.push_front(new ListReader(';', '.', Pos(lin, 0)));
 }
 
-void Scanner::_pop() {
+void Reader::_pop() {
   Token t = _stack.front()->collect(_tok.pos.ini);
   delete _stack.front();
   _stack.pop_front();
@@ -191,11 +191,11 @@ void Scanner::_pop() {
   }
 }
 
-void Scanner::_pop_all() {
+void Reader::_pop_all() {
   while (!_stack.empty()) _pop();
 }
 
-void Scanner::_pop_until(char end) {
+void Reader::_pop_until(char end) {
   while (!_stack.front()->is_end(end)) {
     _pop();
     if (_stack.empty()) {
@@ -205,7 +205,7 @@ void Scanner::_pop_until(char end) {
   _pop();
 }
 
-void Scanner::_maybe_break(Pos p) {
+void Reader::_maybe_break(Pos p) {
   if (_stack.front()->is_lower(p)) {
     bool has_it = _stack.front()->has_indent(p);
     while (!has_it) {
@@ -225,7 +225,7 @@ void Scanner::_maybe_break(Pos p) {
   }
 }
 
-void Scanner::_put() {
+void Reader::_put() {
   if (_tok.val.is<char>()) {
     char c = *_tok.val.as<char>();
     if (c == '\n' && busy()) {
@@ -237,19 +237,19 @@ void Scanner::_put() {
       switch (c) {
       case '(': 
 	_maybe_break(_tok.pos.ini);
-	_push(new TupleScanner(')', _tok.pos.ini));     
+	_push(new TupleReader(')', _tok.pos.ini));     
 	break;
       case ':': 
 	_maybe_break(_tok.pos.ini);
-	_push(new ListScanner(';', '.', _tok.pos.ini)); 
+	_push(new ListReader(';', '.', _tok.pos.ini)); 
 	break;
       case '{':
 	_maybe_break(_tok.pos.ini);
-	_push(new ListScanner(';', '}', _tok.pos.ini)); 
+	_push(new ListReader(';', '}', _tok.pos.ini)); 
 	break;
       case '`':
 	_maybe_break(_tok.pos.ini);
-	_push(new QuoteScanner(';', '\'', _tok.pos.ini)); 
+	_push(new QuoteReader(';', '\'', _tok.pos.ini)); 
 	break;
       case ';': _stack.front()->put_sep(c); break;
       case ')': 
@@ -267,13 +267,13 @@ void Scanner::_put() {
   }
 }
 
-void Scanner::put(char c) {
+void Reader::put(char c) {
   _T.put(c);
   while (_T.get(_tok)) _put();
 }
 
 
-void Scanner::putline(const str& s) {
+void Reader::putline(const str& s) {
   for (size_t k = 0; k < s.size(); k++) put(s[k]);
   put('\n');
 }

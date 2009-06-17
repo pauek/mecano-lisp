@@ -88,7 +88,7 @@ public:
   }
 };
 
-struct SeqScanner {
+struct SeqReader {
   std::vector<Range> indents;
   Pos   ini;
   Tuple acum;
@@ -96,7 +96,7 @@ struct SeqScanner {
   bool  can_break;
   int   unquote;
   
-  SeqScanner(char c, Pos p) 
+  SeqReader(char c, Pos p) 
     : ini(p), end(c), can_break(false), unquote(0) {}
   
   bool  busy() const { return !acum->empty(); }
@@ -120,17 +120,17 @@ struct SeqScanner {
   virtual Any  _collect()  { return acum; }
 };
 
-typedef SeqScanner TupleScanner;
+typedef SeqReader TupleReader;
 
-struct ListScanner : public SeqScanner {
+struct ListReader : public SeqReader {
   char _sep;
   List _list;
 
   void _collect_tuple();
 
 public:
-  ListScanner(char sep, char end, Pos pos) 
-    : SeqScanner(end, pos), _sep(sep) {
+  ListReader(char sep, char end, Pos pos) 
+    : SeqReader(end, pos), _sep(sep) {
     can_break = true;
   }
   
@@ -142,19 +142,19 @@ public:
   Any  _collect();
 };
 
-struct QuoteScanner : public ListScanner {
+struct QuoteReader : public ListReader {
 public:
-  QuoteScanner(char sep, char end, Pos pos)
-    : ListScanner(sep, end, pos) {}
+  QuoteReader(char sep, char end, Pos pos)
+    : ListReader(sep, end, pos) {}
   Any _collect();
 };
 
-class Scanner : public Queue<Any> {
+class Reader : public Queue<Any> {
   Tokenizer _T;
   Token _tok;
-  list<SeqScanner *> _stack;
+  list<SeqReader *> _stack;
 
-  void _push(SeqScanner *s) {
+  void _push(SeqReader *s) {
     _stack.push_front(s);
   }
 
@@ -166,7 +166,7 @@ class Scanner : public Queue<Any> {
   void _maybe_break(Pos p);
 
 public:
-  Scanner();
+  Reader();
   void put(char c);
   void putline(const str& s);
 

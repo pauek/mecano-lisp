@@ -5,7 +5,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "core.hh"
-#include "scan.hh"
+#include "read.hh"
 using namespace mc;
 using namespace std;
 
@@ -79,12 +79,12 @@ int main(int argc, char *argv[]) {
   Input *in = setup_input(conf);
 
   VM vm;
-  Scanner S;
+  Reader R;
   string line = in->read_line(prompt1);
   while (!in->end()) {
-    S.putline(line);
+    R.putline(line);
     Any a;
-    while (S.get(a)) {
+    while (R.get(a)) {
       if (conf.scan_only) {
 	cout << a << endl;
       } else {
@@ -92,6 +92,6 @@ int main(int argc, char *argv[]) {
 	cout << vm.val << endl;
       }
     }
-    line = in->read_line(S.busy() ? prompt2 : prompt1);
+    line = in->read_line(R.busy() ? prompt2 : prompt1);
   }
 }
