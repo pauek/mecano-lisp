@@ -265,6 +265,15 @@ struct seq : public std::vector<Any> {
 	      std::vector<Any>::iterator end) {
     copy(begin, end, back_inserter(*this));
   }
+
+  seq headless() {
+    seq s;
+    if (empty()) return s;
+    else {
+      s.append(begin() + 1, end());
+      return s;
+    }
+  }
 };
 struct tup : seq {};
 struct lst : seq {};
@@ -364,6 +373,7 @@ struct VM {
   Env          *env;
   Continuation *cont;
   bool          breturn, berror;
+  int           lquote; // quote level
 
   VM() { reset(); }
   
@@ -547,21 +557,11 @@ public:
   call(Tuple form) : _form(form) {}
 
   static void eval(VM& vm, const call& c) {
-    vm.push(new Cont<call>(c));
-    vm.val = c._form;
-  }
-  
-  static void cont(VM& vm, const Cont<call>& c, Any a) {
-    vm.pop();
-    Tuple form = Tuple::from(a);
-    if (form.is_null()) {
-      throw TypeError("Call: not calling tuple!");
-    }
-    Func f = form[0];
+    Func f = c._form[0];
     if (f.is_null()) {
-      throw TypeError("Call: not calling tuple!");
+      throw TypeError("Call: head is not a function!");
     }
-    f->exec(vm, form);
+    f->exec(vm, c._form);
   }
 
   bool operator==(const call& c) const { 
@@ -570,7 +570,6 @@ public:
 
   friend
   std::ostream& operator<<(std::ostream&, const call&);
-
 };
 
 class Call : public Box<call> {
@@ -622,13 +621,17 @@ EVAL_BASIC(Real, double)
 EVAL_BASIC(Func, func)
 
 inline void eval(VM& vm, const sym& s) {
-  Any a;
-  if (!vm.env->lookup(s, a)) {
-    std::stringstream out;
-    out << "symbol `" << s << "' not found.";
-    throw NameError(out.str());
+  if (vm.lquote > 0) {
+    vm.yield(Sym(s));
+  } else {
+    Any a;
+    if (!vm.env->lookup(s, a)) {
+      std::stringstream out;
+      out << "symbol `" << s << "' not found.";
+      throw NameError(out.str());
+    }
+    vm.yield(a);
   }
-  vm.yield(a);
 }
 
 template<typename seq>
@@ -657,10 +660,7 @@ struct tupCont : public seqCont<tup> {
   }
 };
 
-inline void eval(VM& vm, const tup& t) {
-  vm.push(new tupCont(t));
-  vm.val = t[0];
-};
+void eval(VM& vm, const tup& t);
 
 inline void eval(VM& vm, const lst& l) {
   vm.push(new lstCont(l));

@@ -125,11 +125,90 @@ void Env::bind(sym s, Any a) {
   }
 }
 
+// Eval ////////////////////////////////////////////////////
+
+struct RestoreQuoteLevel : public Continuation {
+  int level;
+  RestoreQuoteLevel(int l) : level(l) {}
+  void call(VM& vm, Any a) {
+    vm.pop();
+    vm.lquote = level;
+    vm.yield(a);
+  }
+};
+
+struct Invoke : public Continuation {
+  void call(VM& vm, Any a) {
+    Tuple t = Tuple::from(a);
+    assert(t.not_null());
+    vm.pop();
+    cout << "invoke" << endl;
+    vm.val = Call(t);
+  }
+};
+
+void eval(VM& vm, const tup& t) {
+  if (t.size() == 0) {
+    vm.yield(Nil);
+  }
+  else if (t[0] == Sym("unquote")) {
+    if (t.size() != 2) {
+      throw ParseError("Unquote needs only one argument");
+    }
+    vm.push(new RestoreQuoteLevel(vm.lquote));
+    vm.lquote--;
+    if (vm.lquote < 0) {
+      throw ParseError("Quote level below zero");
+    }
+    vm.val = t[1];
+  } 
+  else if (t[0] == Sym("quote")) {
+    if (t.size() != 2) {
+      throw ParseError("Quote needs only one argument");
+    }
+    vm.push(new RestoreQuoteLevel(vm.lquote));
+    vm.lquote++;
+    vm.val = t[1];
+  } 
+  else {
+    if (vm.lquote > 0) {
+      vm.push(new tupCont(t));
+      vm.val = t[0];
+      return;
+    }
+
+    if (t.size() > 1 and t[1] == Sym("=")) {
+      if (t.size() != 3) {
+	throw ParseError("Set needs exactly 2 arguments");
+      }
+      vm.val = Set(t[0], t[2]);
+    } 
+    else if (t[0] == Sym("\\")) {
+      Tuple params;
+      for (size_t k = 1; k < t.size() - 1; k++) {
+	params->push_back(t[k]);
+      }
+      vm.val = Lambda(params, t.back());
+    } 
+    else if (t[0] == Sym("if")) {
+      if (t.size() != 4) {
+	throw ParseError("If needs 3 arguments");
+      }
+      vm.val = If(t[1], t[2], t[3]);
+    } 
+    else {
+      vm.push(new Invoke);
+      vm.push(new tupCont(t));
+      vm.val = t[0];
+    }
+  }
+};
 
 // Virtual Machine /////////////////////////////////////////
 
 void VM::reset() {
   berror = breturn = false;
+  lquote = 0;
   cont = NULL;
   val = Nil;
   env = new Env();
@@ -137,22 +216,22 @@ void VM::reset() {
 }
 
 void VM::init() {
-  env->bind(sym("quit"), Prim(quit));
-  env->bind(sym("apply"), Prim(apply));
-  env->bind(sym("parse"), Prim(parse2));
-  env->bind(sym("sym"),   Prim(direct< unary<mksym> >));
+  env->bind(sym("quit"),    Prim(quit));
+  env->bind(sym("apply"),   Prim(apply));
+  env->bind(sym("sym"),     Prim(direct< unary<mksym> >));
   env->bind(sym("call/cc"), Prim(callcc));
-  env->bind(sym("scan"), Prim(direct< unary<scan> >));
-  env->bind(sym("list"), Prim(direct<mklist>));
-  env->bind(sym("+"), Prim(direct<sum>));
-  env->bind(sym("<"), Prim(direct< pairwise<less> >));
-  env->bind(sym("=="), Prim(direct< pairwise<equal> >));
-  env->bind(sym("1st"), Prim(direct< unary< nth<1> > >));
-  env->bind(sym("2nd"), Prim(direct< unary< nth<2> > >));
-  env->bind(sym("3rd"), Prim(direct< unary< nth<3> > >));
-  env->bind(sym("4th"), Prim(direct< unary< nth<4> > >));
-  env->bind(sym("5th"), Prim(direct< unary< nth<5> > >));
-  env->bind(sym("len"), Prim(direct< unary<len> >));
+  env->bind(sym("scan"),    Prim(direct< unary<scan> >));
+  env->bind(sym("list"),    Prim(direct< mkseq<List> >));
+  env->bind(sym("tuple"),   Prim(direct< mkseq<Tuple> >));
+  env->bind(sym("+"),       Prim(direct<sum>));
+  env->bind(sym("<"),       Prim(direct< pairwise<less> >));
+  env->bind(sym("=="),      Prim(direct< pairwise<equal> >));
+  env->bind(sym("1st"),     Prim(direct< unary< nth<1> > >));
+  env->bind(sym("2nd"),     Prim(direct< unary< nth<2> > >));
+  env->bind(sym("3rd"),     Prim(direct< unary< nth<3> > >));
+  env->bind(sym("4th"),     Prim(direct< unary< nth<4> > >));
+  env->bind(sym("5th"),     Prim(direct< unary< nth<5> > >));
+  env->bind(sym("len"),     Prim(direct< unary<len> >));
 }
 
 bool VM::step() {
@@ -160,10 +239,12 @@ bool VM::step() {
     if (breturn) {
       breturn = false;
       if (!cont) return false;
+      cout << "cont[" << lquote << "] " << val << endl;
       cont->call(*this, val);
     }
     else {
       if (val.is_null()) return false;
+      cout << "eval[" << lquote << "] " << val << endl;
       val->eval(*this);
     }
     return true;

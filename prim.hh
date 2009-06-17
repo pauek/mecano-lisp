@@ -41,6 +41,13 @@ Any pairwise(Tuple args) {
   return True;
 }
 
+template<typename Seq>
+Any mkseq(Tuple args) {
+  Seq s;
+  s->append(args->begin() + 1, args->end());
+  return s;
+}
+
 void quit(VM& vm, Tuple args);
 void callcc(VM& vm, Tuple args);
 void apply(VM& vm, Tuple args);
@@ -50,7 +57,6 @@ Any  scan(Any a);
 Any  less(Any a, Any b);
 Any  equal(Any a, Any b);
 Any  sum(Tuple args);
-Any  mklist(Tuple args);
 
 } // namespace
 

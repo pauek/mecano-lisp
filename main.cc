@@ -11,19 +11,16 @@ using namespace std;
 
 struct Config {
   string file;
-  bool parse_only;
   bool scan_only;
   Config() 
-    : file(""), parse_only(false), scan_only(false) 
+    : file(""), scan_only(false) 
   {}
 };
 
 void parse_args(int argc, char *argv[], Config& conf) {
   for (int k = 1; k < argc; k++) {
     const string argk(argv[k]);
-    if (argk == "-p" || argk == "--parse-only") 
-      conf.parse_only = true;
-    else if (argk == "-s" || argk == "--scan-only")
+    if (argk == "-s" || argk == "--scan-only")
       conf.scan_only = true;
     else 
       conf.file = argv[k];
@@ -91,13 +88,8 @@ int main(int argc, char *argv[]) {
       if (conf.scan_only) {
 	cout << a << endl;
       } else {
-	a = parse(a);
-	if (conf.parse_only) {
-	  cout << a << endl;
-	} else {
-	  vm.eval(a);
-	  cout << vm.val << endl;
-	}
+	vm.eval(a);
+	cout << vm.val << endl;
       }
     }
     line = in->read_line(S.busy() ? prompt2 : prompt1);

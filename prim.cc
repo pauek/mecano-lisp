@@ -112,10 +112,5 @@ Any sum(Tuple args) {
   return Int(sum);
 }
 
-Any mklist(Tuple args) {
-  List l;
-  l->append(args->begin() + 1, args->end());
-  return l;
-}
 
 } // namespace
