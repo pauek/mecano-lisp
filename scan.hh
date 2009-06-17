@@ -175,10 +175,6 @@ public:
   }
 };
 
-// Parse
-Any  parse(Any in);
-void parse2(VM& vm, Tuple args);
-
 } // namespace
 
 #endif
