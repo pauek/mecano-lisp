@@ -11,17 +11,17 @@ using namespace std;
 
 struct Config {
   string file;
-  bool scan_only;
+  bool read_only;
   Config() 
-    : file(""), scan_only(false) 
+    : file(""), read_only(false) 
   {}
 };
 
 void parse_args(int argc, char *argv[], Config& conf) {
   for (int k = 1; k < argc; k++) {
     const string argk(argv[k]);
-    if (argk == "-s" || argk == "--scan-only")
-      conf.scan_only = true;
+    if (argk == "-s" || argk == "--read-only")
+      conf.read_only = true;
     else 
       conf.file = argv[k];
   }
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
     R.putline(line);
     Any a;
     while (R.get(a)) {
-      if (conf.scan_only) {
+      if (conf.read_only) {
 	cout << a << endl;
       } else {
 	vm.eval(a);

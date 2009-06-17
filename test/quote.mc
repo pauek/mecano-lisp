@@ -1,4 +1,4 @@
-## --scan-only
+## --read-only
 `a'.           # {(quote {a})}
 `a b'.         # {(quote {(a b)})}
 `a b c'.       # {(quote {(a b c)})}

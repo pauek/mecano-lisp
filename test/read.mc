@@ -1,4 +1,4 @@
-## --scan-only
+## --read-only
 a.        # {a}
 a b.      # {(a b)}
 a b c.    # {(a b c)}
