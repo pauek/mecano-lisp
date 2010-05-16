@@ -17,7 +17,7 @@ protected:
   void _enq(const T& t) { 
     _queue.push(t); 
   }
-  void _reset() { 
+  void _clear() { 
     // no 'clear' in queue<T>... sigh.
     while (!_queue.empty()) _queue.pop(); 
   }
@@ -84,7 +84,7 @@ class Tokenizer : public Queue<Token> {
   void _reset(int lin) {
     _text = "";
     _mode = normal;
-    Queue<Token>::_reset();
+    Queue<Token>::_clear();
   }
   
 public:
@@ -174,7 +174,7 @@ class Reader : public Queue<Any> {
 
 public:
   Reader()     { _reset(); }
-  void reset() { _reset(); Queue<Any>::_reset(); }
+  void reset() { _reset(); Queue<Any>::_clear(); }
 
   void put(char c);
   void putline(const str& s);
