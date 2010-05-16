@@ -167,8 +167,12 @@ void eval(VM& vm, const sym& s) {
 }
 
 void eval(VM& vm, const lst& l) {
-  vm.push(new seqCont<lst>(l, vm.lquote == 0));
-  vm.val = l[0];
+  if (l.empty()) {
+    vm.yield(Nil);
+  } else {
+    vm.push(new seqCont<lst>(l, vm.lquote == 0));
+    vm.val = l[0];
+  }
 }
 
 void eval(VM& vm, const tup& t) {

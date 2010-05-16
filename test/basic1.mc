@@ -23,3 +23,6 @@ a.                       # 10
 == + +.       # true
 == 1 0.       # false
 == + <.	      # false
+
+().           # nil
+{}.           # nil
