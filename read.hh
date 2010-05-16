@@ -15,10 +15,10 @@ class Queue {
   queue<T> _queue;
 protected:
   void _enq(const T& t) { 
-    // std::cout << t << std::endl;
     _queue.push(t); 
   }
   void _reset() { 
+    // no 'clear' in queue<T>... sigh.
     while (!_queue.empty()) _queue.pop(); 
   }
 public:
