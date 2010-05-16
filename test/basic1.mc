@@ -13,8 +13,8 @@ a.              # 3
 (\ x: x) 1.     # 1
 
 (\ x y: + x y) 6 7.      # 13
-(if true 1 2).           # 1
-(if false 1 2).          # 2
+if true 1 2.             # 1
+if false 1 2.            # 2
 a = 10.                  # 10
 a.                       # 10
 (\ a: (\ b: + a b) 2) 1. # 3
