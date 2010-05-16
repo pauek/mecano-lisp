@@ -82,15 +82,21 @@ int main(int argc, char *argv[]) {
   Reader R;
   string line = in->read_line(prompt1);
   while (!in->end()) {
-    R.putline(line);
-    Any a;
-    while (R.get(a)) {
-      if (conf.read_only) {
-	cout << a << endl;
-      } else {
-	vm.eval(a);
-	cout << vm.val << endl;
+    try {
+      R.putline(line);
+      Any a;
+      while (R.get(a)) {
+	if (conf.read_only) {
+	  cout << a << endl;
+	} else {
+	  vm.eval(a);
+	  cout << vm.val << endl;
+	}
       }
+    }
+    catch (ScanError& e) {
+      cout << "ScanError: " << e.msg << endl;
+      R.reset();
     }
     line = in->read_line(R.busy() ? prompt2 : prompt1);
   }

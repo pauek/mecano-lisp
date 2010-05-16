@@ -18,6 +18,9 @@ protected:
     // std::cout << t << std::endl;
     _queue.push(t); 
   }
+  void _reset() { 
+    while (!_queue.empty()) _queue.pop(); 
+  }
 public:
   bool get(T& t);
 };
@@ -38,6 +41,7 @@ struct Pos {
 
   Pos operator+(int i) const { return Pos(lin, col + i); }
   Pos operator-(int i) const { return Pos(lin, col - i); }
+  void newline() { lin++, col = 0; }
 };
 
 struct Range { 
@@ -73,11 +77,19 @@ class Tokenizer : public Queue<Token> {
   void _put_string(char c);
 
   void _collect();
-
+  
+  void _reset(int lin) {
+    _acum = "";
+    _mode = normal;
+    _endl = _2endls = true;
+    _dot = false;
+    Queue<Token>::_reset();
+  }
+  
 public:
-  Tokenizer() 
-    : _pos(-1, -1), _mode(normal), 
-      _endl(true), _2endls(false), _dot(false) {}
+  Tokenizer()  { _reset(-1); }
+
+  void reset() { _reset(_pos.lin + 1); }
 
   Pos  pos() const { return _pos; }
   void put(char c);
@@ -154,24 +166,25 @@ class Reader : public Queue<Any> {
   Token _tok;
   list<SeqReader *> _stack;
 
-  void _push(SeqReader *s) {
-    _stack.push_front(s);
-  }
-
+  void _reset();
   void _put();
-  void _init(int lin);
+
+  void _push(SeqReader *s) { _stack.push_front(s); }
   void _pop();
   void _pop_until(char end);
   void _pop_all();
+
   void _maybe_break(Pos p);
 
 public:
-  Reader();
+  Reader()     { _reset(); }
+  void reset() { _reset(); Queue<Any>::_reset(); }
+
   void put(char c);
   void putline(const str& s);
 
   bool busy() const { 
-    return _stack.front()->busy() || _T.busy(); 
+    return (!_stack.empty() && _stack.front()->busy()) || _T.busy(); 
   }
 };
 

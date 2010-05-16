@@ -172,12 +172,9 @@ Any QuoteReader::_collect() {
 
 // Reader /////////////////////////////////////////////////
 
-Reader::Reader() {
-  _init(0);
-}
-
-void Reader::_init(int lin) {
-  _stack.push_front(new ListReader(';', '.', Pos(lin, 0)));
+void Reader::_reset() { 
+  _T.reset();
+  _stack.clear(); 
 }
 
 void Reader::_pop() {
@@ -226,11 +223,15 @@ void Reader::_maybe_break(Pos p) {
 }
 
 void Reader::_put() {
+  if (_stack.empty()) {
+    _stack.push_front(new ListReader(';', '.', _T.pos()));
+  }
+
   if (_tok.val.is<char>()) {
     char c = *_tok.val.as<char>();
     if (c == '\n' && busy()) {
       _pop_all();
-      _init(_tok.pos.fin.lin);
+      _reset();
     } else if (c == '@') {
       _stack.front()->unquote++;
     } else {
@@ -256,7 +257,7 @@ void Reader::_put() {
       case '\'':
       case '.': {
 	_pop_until(c); 
-	if (_stack.empty()) _init(_tok.pos.fin.lin);
+	if (_stack.empty()) _reset();
 	break;
       }
       }
