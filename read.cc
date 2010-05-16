@@ -39,14 +39,8 @@ void Tokenizer::_collect() {
 }
 
 void Tokenizer::_put_normal(char c) {
-  if (c == '\n') {
-    if (_endl && !_2endls) {
-      _enq(Token(Range(_pos), Box<char>('\n')));
-      _2endls = true;
-    }
-    _endl = true;
-  } else {
-    _endl = _2endls = false;
+  if (c == '\n' && _last == '\n') {
+    _enq(Token(Range(_pos), Box<char>('\n')));
   }
 
   bool bsep = issep(c);
@@ -108,17 +102,19 @@ void Tokenizer::_put_string(char c) {
 }
 
 void Tokenizer::put(char c) {
-  if (_endl) ++_pos.lin, _pos.col = 0;
-  else ++_pos.col;
-
   switch (_mode) {
   case normal: _put_normal(c); break;
   case string: _put_string(c); break;
   case comment: 
-    if (c == '\n') {
-      _mode = normal;
-      _endl = true;
-    }
+    if (c == '\n') { _mode = normal; }
+  }
+
+  if (c == '\n') {
+    _pos.newline(); 
+    _last = (_last == '\n'? 0 : '\n');
+  } else {
+    ++_pos;
+    _last = c;
   }
 }
 

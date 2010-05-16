@@ -35,11 +35,12 @@ bool Queue<T>::get(T& t) {
 
 struct Pos {
   int lin, col;
-  Pos()             : lin(-1), col(-1) {}
-  Pos(int l, int c) : lin(l),  col(c)  {}
+  Pos()             : lin(0), col(0) {}
+  Pos(int l, int c) : lin(l), col(c)  {}
 
   Pos operator+(int i) const { return Pos(lin, col + i); }
   Pos operator-(int i) const { return Pos(lin, col - i); }
+  void operator++()          { col++; }
   void newline() { lin++, col = 0; }
 };
 
@@ -71,7 +72,8 @@ class Tokenizer : public Queue<Token> {
   Pos   _pos;
   str   _acum;
   Mode  _mode;
-  bool  _endl, _2endls, _escape, _dot;
+  char  _last;
+  bool  _escape, _dot;
   Token _curr;
   str   _text;
 
@@ -83,7 +85,6 @@ class Tokenizer : public Queue<Token> {
   void _reset(int lin) {
     _acum = "";
     _mode = normal;
-    _endl = _2endls = true;
     _dot = false;
     Queue<Token>::_reset();
   }
