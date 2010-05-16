@@ -70,12 +70,11 @@ operator<<(std::ostream& o, const Token& t) {
 class Tokenizer : public Queue<Token> {
   enum Mode { normal, comment, string };
   Pos   _pos;
-  str   _acum;
+  str   _acum, _text;
   Mode  _mode;
   char  _last;
-  bool  _escape, _dot;
+  bool  _escape;
   Token _curr;
-  str   _text;
 
   void _put_normal(char c);
   void _put_string(char c);
@@ -85,7 +84,6 @@ class Tokenizer : public Queue<Token> {
   void _reset(int lin) {
     _acum = "";
     _mode = normal;
-    _dot = false;
     Queue<Token>::_reset();
   }
   

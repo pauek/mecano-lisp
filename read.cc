@@ -6,7 +6,7 @@ using namespace std;
 
 namespace mc {
 
-const string seps = ":;(){}`'"; // '.' has special treatment
+const string seps = ".:;(){}`'";
 inline bool issep(char c) {
   return seps.find(c) != str::npos;
 }
@@ -32,10 +32,6 @@ void Tokenizer::_collect() {
     _enq(_curr);
     _text = "";
   }
-  if (_dot) {
-    _enq(Token(Range(_pos), Box<char>('.'))); 
-    _dot = false;
-  }
 }
 
 void Tokenizer::_put_normal(char c) {
@@ -54,10 +50,6 @@ void Tokenizer::_put_normal(char c) {
     _collect();
     _enq(Token(Range(_pos), Box<char>('@')));
   }
-  else if (c == '.') {
-    if (_dot) _collect();
-    _dot = true;
-  }
   else if (c == '"') {
     _collect();
     _mode = string;
@@ -69,10 +61,6 @@ void Tokenizer::_put_normal(char c) {
     _mode = comment;
   }
   else {
-    if (_dot) {
-      _text += '.';
-      _dot = false;
-    }
     if (_text.empty()) _curr.pos.ini = _pos;
     _text += c;
   }
