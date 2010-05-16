@@ -14,41 +14,36 @@ inline bool issep(char c) {
 // Tokenizer ///////////////////////////////////////////////
 
 void Tokenizer::_collect() {
-  if (!_text.empty()) {
-    const char *begin = _text.c_str();
-    char *end;
-    long int i = strtold(begin, &end);
+  if (_text.empty()) return;
+
+  const char *begin = _text.c_str();
+  char *end;
+  long int i = strtol(begin, &end, 10);
+  if (size_t(end - begin) == _text.size()) {
+    _curr.val = Int(i);
+  } else {
+    double d = strtod(begin, &end);
     if (size_t(end - begin) == _text.size()) {
-      _curr.val = Int(i);
-    } else{
-      double d = strtod(begin, &end);
-      if (size_t(end - begin) == _text.size()) {
-	_curr.val = Real(d);
-      } else {
-	_curr.val = Sym(_text);
-      }
+      _curr.val = Real(d);
+    } else {
+      _curr.val = Sym(_text);
     }
-    _curr.pos.fin = _pos - 1;
-    _enq(_curr);
-    _text = "";
   }
+  _curr.pos.fin = _pos - 1;
+  _enq(_curr);
+  _text = "";
 }
 
 void Tokenizer::_put_normal(char c) {
-  if (c == '\n' && _last == '\n') {
-    _enq(Token(Range(_pos), Box<char>('\n')));
-  }
-
-  bool bsep = issep(c);
-  if (isspace(c) || bsep) {
+  if (isspace(c)) {
     _collect();
-    if (bsep) {
-      _enq(Token(Range(_pos), Box<char>(c)));
+    if (c == '\n' && _last == '\n') {
+      _enq(Token(Range(_pos), Box<char>('\n')));
     }
-  }
-  else if (c == '@') {
+  } 
+  else if (issep(c) || c == '@') {
     _collect();
-    _enq(Token(Range(_pos), Box<char>('@')));
+    _enq(Token(Range(_pos), Box<char>(c)));
   }
   else if (c == '"') {
     _collect();
@@ -71,8 +66,12 @@ void Tokenizer::_put_string(char c) {
     _escape = false;
     switch (c) {
     case 'n':  _text += '\n'; break;
-    case '\\': _text += '\\'; break;
-    case '"':  _text += '"';  break;
+    case 't':  _text += '\t'; break;
+    case 'r':  _text += '\r'; break;
+    case 'b':  _text += '\b'; break;
+    case '\\': 
+    case '"':  _text += c;  break;
+    default: throw ScanError("Unknown escape char.");
     }
   } else {
     if (c == '\\') {
@@ -187,22 +186,22 @@ void Reader::_pop_until(char end) {
 }
 
 void Reader::_maybe_break(Pos p) {
-  if (_stack.front()->is_lower(p)) {
-    bool has_it = _stack.front()->has_indent(p);
-    while (!has_it) {
-      if (!_stack.front()->can_break) {
-	throw ScanError("Unexpected indentation");
-      }
-      _pop();
-      if (_stack.empty()) {
-	throw ScanError("Unexpected indentation");
-      }
-      has_it = _stack.front()->has_indent(p);
+  if (!_stack.front()->is_lower(p)) return;
+
+  bool has_it = _stack.front()->has_indent(p);
+  while (!has_it) {
+    if (!_stack.front()->can_break) {
+      throw ScanError("Unexpected indentation");
     }
-    if (_stack.front()->is_initial(p) && 
-	_stack.front()->can_break) {
-      _stack.front()->put_break();
+    _pop();
+    if (_stack.empty()) {
+      throw ScanError("Unexpected indentation");
     }
+    has_it = _stack.front()->has_indent(p);
+  }
+  if (_stack.front()->is_initial(p) && 
+      _stack.front()->can_break) {
+    _stack.front()->put_break();
   }
 }
 
@@ -210,7 +209,6 @@ void Reader::_put() {
   if (_stack.empty()) {
     _stack.push_front(new ListReader(';', '.', _T.pos()));
   }
-
   if (_tok.val.is<char>()) {
     char c = *_tok.val.as<char>();
     if (c == '\n' && busy()) {
