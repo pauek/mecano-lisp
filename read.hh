@@ -61,7 +61,11 @@ struct Token {
 
 inline std::ostream& 
 operator<<(std::ostream& o, const Token& t) {
-  return o << '[' << t.pos.ini.lin << ", " << t.pos.ini.col << ": " << t.val << ']';
+  return o << '[' 
+	   << t.pos.ini.lin << ", " 
+	   << t.pos.ini.col << ": " 
+	   << t.val 
+	   << ']';
 }
 
 class Tokenizer : public Queue<Token> {
@@ -101,7 +105,7 @@ public:
 };
 
 struct SeqReader {
-  std::vector<Range> indents;
+  std::vector<Range> positions;
   Pos   ini;
   Tuple acum;
   char  end;
@@ -114,10 +118,10 @@ struct SeqReader {
   bool  busy() const { return !acum->empty(); }
   bool  has_indent(Pos p) const;
   bool  is_lower(Pos p) const { 
-    return !indents.empty() && indents.back().fin.lin < p.lin;
+    return !positions.empty() && positions.back().fin.lin < p.lin;
   }
   bool  is_initial(Pos p) const { 
-    return !indents.empty() && indents.front().ini.col == p.col;
+    return !positions.empty() && positions.front().ini.col == p.col;
   }
   void  put(Token& t);
   bool  is_end(char c) const { return end == c; }

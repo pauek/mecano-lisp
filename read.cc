@@ -125,7 +125,7 @@ void Tokenizer::put(char c) {
 // Reader /////////////////////////////////////////////////
 
 void SeqReader::put(Token& t) {
-  indents.push_back(t.pos);
+  positions.push_back(t.pos);
   Any v = t.val;
   while (unquote > 0) {
     v = Tuple(Sym("unquote"), v);
@@ -136,8 +136,8 @@ void SeqReader::put(Token& t) {
 
 bool SeqReader::has_indent(Pos p) const {
   vector<Range>::const_reverse_iterator i;
-  i = indents.rbegin();
-  for (; i != indents.rend(); i++) {
+  i = positions.rbegin();
+  for (; i != positions.rend(); i++) {
     if (i->ini.col == p.col) return true;
   }
   return false;
