@@ -255,11 +255,10 @@ void Reader::_put() {
       case ';': _stack.front()->put_sep(c); break;
       case ')': 
       case '\'':
-      case '.': {
+      case '.':
 	_pop_until(c); 
 	if (_stack.empty()) _reset();
 	break;
-      }
       }
     }
   } else {
