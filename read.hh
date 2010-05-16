@@ -35,9 +35,8 @@ bool Queue<T>::get(T& t) {
 
 struct Pos {
   int lin, col;
-  Pos() : lin(-1), col(-1) {}
-  Pos(int l, int c) 
-    : lin(l), col(c) {}
+  Pos()             : lin(-1), col(-1) {}
+  Pos(int l, int c) : lin(l),  col(c)  {}
 
   Pos operator+(int i) const { return Pos(lin, col + i); }
   Pos operator-(int i) const { return Pos(lin, col - i); }
@@ -55,8 +54,7 @@ struct Token {
   Range pos;
   Any val;
   Token() {}
-  Token(Range r, Any v)
-    : pos(r), val(v) {}
+  Token(Range r, Any v) : pos(r), val(v) {}
 };
 
 inline std::ostream& 
@@ -98,9 +96,7 @@ public:
   Pos  pos() const { return _pos; }
   void put(char c);
   bool busy() const { 
-    return _mode == string || 
-      _mode == comment ||
-      (_mode == normal && _text != ""); 
+    return _mode != normal || _text != "";
   }
 };
 
