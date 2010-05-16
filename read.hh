@@ -89,15 +89,12 @@ class Tokenizer : public Queue<Token> {
   }
   
 public:
-  Tokenizer()  { _reset(-1); }
+  Tokenizer()       { _reset(-1); }
+  void reset()      { _reset(_pos.lin + 1); }
+  Pos  pos()  const { return _pos; }
+  bool busy() const { return _mode != normal || _text != ""; }
 
-  void reset() { _reset(_pos.lin + 1); }
-
-  Pos  pos() const { return _pos; }
   void put(char c);
-  bool busy() const { 
-    return _mode != normal || _text != "";
-  }
 };
 
 struct SeqReader {
